@@ -22,6 +22,10 @@ body.assignments:not(.outcomes):not(.body--login-confirmation) .ic-Layout-wrappe
     max-width: 1688px
 }
 
+body.assignments.is-masquerading-or-student-view:not(.outcomes):not(.body--login-confirmation) .ic-Layout-wrapper {
+    max-width: 1400px
+}
+
 body {
     font-family: "Roboto", Helvetica, Arial, sans-serif
 }
@@ -1670,12 +1674,12 @@ ul.cbt-tab-trigger-list li.active::after {
     line-height: 1.3
 }
 
-.cbt-blockquote p:before {
+.cbt-blockquote p:not(.cbt-author):before {
     content: "“";
     color: var(--primary-color)
 }
 
-.cbt-blockquote p:after {
+.cbt-blockquote p:not(.cbt-author):after {
     content: "”";
     color: var(--primary-color)
 }
@@ -1683,6 +1687,12 @@ ul.cbt-tab-trigger-list li.active::after {
 .cbt-blockquote blockquote strong {
     color: var(--primary-color)
 }
+
+.cbt-blockquote blockquote p.cbt-author {
+    font-size: 1rem;
+    font-style: italic;
+}
+
 
 :root {
     --cbt-btn-bg: #fff;
