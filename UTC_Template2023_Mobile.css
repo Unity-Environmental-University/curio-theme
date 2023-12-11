@@ -2682,6 +2682,12 @@ table.cbt-table tbody tr:nth-child(even), .cbt-table>table tbody tr:nth-child(ev
     color: var(--cbt-black)
 }
 
+table.cbt-table tbody tr:nth-child(odd),.cbt-table>table tbody tr:nth-child(even),.cbt-content table.cbt-table tbody tr:nth-child(odd),.cbt-content .cbt-table>table tbody tr:nth-child(odd){
+    background-color:rgba(128,128,128,.1);
+    color:var(--cbt-black)
+}
+
+
 table.cbt-table tfoot tr, .cbt-table>table tfoot tr, .cbt-content table.cbt-table tfoot tr, .cbt-content .cbt-table>table tfoot tr {
     border-top: 2px solid var(--primary-color)
 }
