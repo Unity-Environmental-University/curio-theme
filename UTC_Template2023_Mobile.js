@@ -1233,6 +1233,21 @@ function console2(message) {
         if(ScaffoldClient.courseData.currentItem && ScaffoldClient.courseData.currentItem.hasOwnProperty("type") && ScaffoldClient.courseData.currentItem.type === 'Discussion'){ // they have to be a module item
           var discussionId = 'task-'+ (Object.keys(ScaffoldClient.courseData.currentModule).length > 0 ? ScaffoldClient.courseData.currentItem.content_id : ScaffoldClient.courseData.currentItem.id); // this is module item id
           var tasks = document.querySelectorAll('.cbt-manual-mark-btn');
+          if (tasks && tasks.length == 2) {
+            let banner = document.querySelector('.scaffold-media-box.cbt-banner.cbt-image-banner');
+            console.log(banner);
+            if (banner) {
+                boilerplate = document.createElement('div');
+                banner.after(boilerplate);
+                boilerplate.outerHTML = '<div class="scaffold-media-box cbt-content cbt-discussion-boilerplate" data-context-menu="insert delete" editable="false" caninsert="false" data-canhavechild="true">' + 
+                '<div class="cbt-callout-box" >' + 
+                '<p><strong>In order to receive credit for this assignment, you must post your own initial response to the prompt (i.e. complete and post the initial portion of the Discussion task) before viewing and/or responding to your peers’ posts.</strong></p>' +
+
+                '</div>' + 
+                '</div>';
+            }
+          }
+
           if(markable_discussion.dataHandler.data[discussionId]){
             var btns = markable_discussion.dataHandler.data[discussionId];
             for (let i = 0; i < tasks.length; i++) {
@@ -1279,6 +1294,24 @@ function console2(message) {
               markable_discussion.ui.updateTaskHTML(currTaskID, e.currentTarget);
             })
           }
+
+          var tasks = document.querySelectorAll('.cbt-manual-mark-btn');
+          if (tasks && tasks.length == 2) {
+            let banner = document.querySelector('.scaffold-media-box.cbt-banner.cbt-image-banner');
+            console.log(banner);
+            if (banner) {
+                boilerplate = document.createElement('div');
+                banner.after(boilerplate);
+                boilerplate.outerHTML = '<div class="scaffold-media-box cbt-content cbt-discussion-boilerplate" data-context-menu="insert delete" editable="false" caninsert="false" data-canhavechild="true">' + 
+                '<div class="cbt-callout-box" >' + 
+                '<p><strong>In order to receive credit for this assignment, you must post your own initial response to the prompt (i.e. complete and post the initial portion of the Discussion task) before viewing and/or responding to your peers’ posts.</strong></p>' +
+
+                '</div>' + 
+                '</div>';
+            }
+          }
+
+          
         }
     })
   }
