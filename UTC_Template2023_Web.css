@@ -342,6 +342,17 @@ h1, h2, h3, h4, h5, h6 {
     margin-top: 0
 }
 
+@media(min-width: 768px){
+    .cbt-content .cbt-instructor-bio {
+        contain: size;
+        overflow-y: auto;
+    }
+}
+
+#tinymce .cbt-content>.content-selector {
+    contain: layout;
+}
+
 .spaced {
     letter-spacing: .9px !important
 }

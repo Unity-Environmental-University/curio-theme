@@ -2079,17 +2079,17 @@ var ScaffoldClient = (function (m, $) {
             let playButton = player.querySelectorAll(classNameList.play)[0];
             let muteButton = player.querySelectorAll(classNameList.mute)[0];
             let progressBar = player.querySelectorAll(classNameList.progress)[0];
-        
+
             hideControls(audio);
-        
+
             playButton.addEventListener('click', function () {
                 audio.play();
             });
-        
+
             muteButton.addEventListener('click', function () {
                 audio.pause();
             });
-        
+
             audio.addEventListener('timeupdate', function () {
                 let progress = audio.currentTime / audio.duration * 100;
                 progressBar.style.width = progress + '%';
@@ -2470,7 +2470,7 @@ var ScaffoldClient = (function (m, $) {
 
         console.log(`item: ${item}`);
 
-        // Things to calculate 
+        // Things to calculate
         // Continue(already have)
         // course progress
 
@@ -2563,7 +2563,7 @@ var ScaffoldClient = (function (m, $) {
         console.log(`========= setCourseProgressBlock END ==========`);
 
         /*
-        
+
         let heading = createElement({elementType: "H3", children: ["Course Progress"]});
             // set info container
             let infoContainer = createElement({elementType: "DIV", classNames: "cbt-progress-info"});
@@ -2574,10 +2574,10 @@ var ScaffoldClient = (function (m, $) {
                     <div class="scaffold-media-box cbt-button">
                         <a title="${item.title}" href="${item.html_url}">Continue...</a>
                     </div>`;
-        
+
             component.appendChild
             return element;
-        
+
             */
     };
 
@@ -5801,3 +5801,48 @@ window.addEventListener('load', function () {
 // (function () { var script = document.createElement('script'); script.src = path, script.async = !0, script.charset = "UTF-8", script.onload = function () { fireEvent("scaffoldclientjscontrolsloaded") }; var firstScript = document.getElementsByTagName("script")[0]; function fireEvent(e) { var t; document.createEventObject || document.createEvent ? (document.createEvent ? (t = document.createEvent("HTMLEvents")).initEvent(e, !0, !0) : document.createEventObject && ((t = document.createEventObject()).eventType = e), t.eventName = e) : t = new CustomEvent(e, { bubbles: !0, cancelable: !0 }), document.dispatchEvent(t) } firstScript.parentNode.insertBefore(script, firstScript); })();
 
 /////// End Main Scaffold Includes ///////
+
+/////////////////////////////////////////////
+/////////// ELEVATEACTUAL CHANGES ///////////
+/////////////////////////////////////////////
+////////////// AS OF 2-20-2024 //////////////
+/////////////////////////////////////////////
+
+$(document).ready(function (classNames){
+
+    //console.clear();
+
+    console.log('ElevateActual custom javascript is running');
+
+    let userID = ENV['current_user_id'];
+
+    // console.log(userID);
+    //
+    // console.log( $('.css-blal5d-view-link').attr('href') );
+
+    //var link = $('.css-blal5d-view-link').attr('href') + userID;
+
+    $('#global_nav_help_link').click(function(event){
+        console.log("Clicked");
+        let tryAddButton;
+        tryAddButton = () => {
+            console.log("Done Waiting");
+            let els = document.querySelectorAll('#nav-tray-portal [href^="https://unitycollege.tfaforms.net/"]');
+            if(els && els.length > 0) {
+                for(let el of els) {
+                    el.href += userID;
+                    console.log(el.href);
+                }
+            } else {
+                setTimeout(tryAddButton, 200);
+            }
+        }
+        tryAddButton();
+        return false;
+    });
+}); // end doc ready
+
+/////////////////////////////////////////////
+///////// END ELEVATEACTUAL CHANGES /////////
+/////////////////////////////////////////////
+
