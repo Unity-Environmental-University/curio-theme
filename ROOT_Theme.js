@@ -3,9 +3,10 @@
 /////////////////////////////////////////////
 ////////////// AS OF 2-20-2024 //////////////
 /////////////////////////////////////////////
-$(document).ready(function (classNames){
 
-    //console.clear();
+
+
+$(document).ready(function (classNames){
 
     console.log('ElevateActual custom javascript is running');
 
@@ -32,6 +33,27 @@ $(document).ready(function (classNames){
             tryAddButton();
         })
     }
+
+    let observer = new MutationObserver((mutations)=>{
+        for (let mutation of mutations) {
+            console.log(mutation.target);
+            let els = mutation.target.querySelectorAll('[href^="https://unitycollege.tfaforms.net/"]')
+            if (els && els.length > 0) {
+                for (let el of els) {
+                    if (el.href.includes(userID)) continue;
+                    el.href += userID;
+                }
+            }
+        }
+    });
+
+    observer.observe(document.querySelector('body'), {
+        characterData: true,
+        childList: true,
+        subtree: true,
+        attributes: true,
+    });
+
 }); // end doc ready
 
 /////////////////////////////////////////////
