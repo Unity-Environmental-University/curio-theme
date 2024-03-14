@@ -526,7 +526,7 @@ var ScaffoldClient = (function (m, $) {
 
             if (!/^\/courses\/\d+\/gradebook/.test(window.location.pathname) && !/^\/courses\/\d+\/assignment/.test(window.location.pathname) && !/\/edit$/.test(window.location.pathname)) { document.body.classList.remove('full-width'); }
 
-            // Only start to load the interactivity while the content page is loaded  
+            // Only start to load the interactivity while the content page is loaded
             if (!document.querySelector(".user_content, #quiz_show")) {
                 // mobile - if (document.querySelector('#content'))
                 const contentLoadInterval = window.setInterval(function () {
@@ -1346,7 +1346,7 @@ var ScaffoldClient = (function (m, $) {
                             if (banner) {
                                 boilerplate = document.createElement('div');
                                 banner.after(boilerplate);
-                                boilerplate.outerHTML = '<div class="scaffold-media-box cbt-content cbt-discussion-boilerplate" data-context-menu="insert delete" editable="false" caninsert="false" data-canhavechild="true">' + 
+                                boilerplate.outerHTML = '<div class="scaffold-media-box cbt-content cbt-discussion-boilerplate" data-context-menu="insert delete" editable="false" caninsert="false" data-canhavechild="true">' +
                                 `<div class="cbt-callout-box" > 
                                 <p><strong>In most Unity DE Discussions, you must post your own initial response
                                 to the prompt before you will be able to view and/or respond to your peers’ posts.</strong></p>
@@ -1481,9 +1481,9 @@ var ScaffoldClient = (function (m, $) {
         for (let rubricBtn of rubricBtns) {
             let rubricUrl = rubricBtn.querySelector('a');
             //if(rubricUrl && rubricUrl.href && /.*\/assignments\/\d+\/rubric$/.test(rubricUrl.href)){// remove rubrics
+            let rubricText = rubricUrl.text? rubricUrl.text : 'Show Rubric';
             if (rubricUrl && rubricUrl.href && /.*\/assignments\/\d+(\/rubric)?\/?$/.test(rubricUrl.href)) {
-                console.log(rubricUrl.href);
-                rubricBtn.innerHTML = '<button class="btn" data-rubric-link="' + rubricUrl.href + '">View rubric</button>';
+                rubricBtn.innerHTML = `<button class="btn" data-rubric-link="${rubricUrl.href}">${rubricText}</button>`;
                 rubricBtn.addEventListener("click", (e) => {
                     const rubricDiv = e.currentTarget;
                     let rubricBtn = e.currentTarget.querySelector('button');
