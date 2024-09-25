@@ -26,7 +26,7 @@ $(document).ready(function (classNames){
             let tryAddButton;
             tryAddButton = () => {
                 console.log("Done Waiting");
-                let els = document.querySelectorAll('#nav-tray-portal [href^="https://unitycollege.tfaforms.net/"]');
+                let els = document.querySelectorAll('#nav-tray-portal [href*="tfaforms.net/"]');
                 if (els && els.length > 0) {
                     for (let el of els) {
                         if (el.href.includes(userID)) continue;
