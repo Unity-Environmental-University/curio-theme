@@ -1,9 +1,10 @@
-import { sliceModulesOut, filterBadgeEarnModules } from '../../src/toolbox/sliceModulesOut';
+import {sliceModulesOut, filterBadgeEarnModules, filterBadgeClaimModules} from '../../src/toolbox/sliceModulesOut';
 
 
 describe("sliceModulesOut", () => {
 
-    const earnItBadges = [{ name: "Badge 1 - How Do I Earn It?"}];
+    const earnItModules = [{ name: "Badge 1 - How Do I Earn It?"}];
+    const claimBadgeModules = [{ name: "Claim Badge 1 - Godzilla Expert"}];
     const weeklyModules = [
             { name: "Module 1"},
             { name: "Module 2"},
@@ -23,11 +24,42 @@ describe("sliceModulesOut", () => {
     it('filters earned it modules out correctly', () => {
         const original = [
             ...weeklyModules,
-            ...earnItBadges,
+            ...earnItModules,
         ]
 
         const { remaining, removed } = sliceModulesOut(original, filterBadgeEarnModules);
         expect(remaining).toEqual(weeklyModules);
-        expect(removed).toEqual(earnItBadges);
+        expect(removed).toEqual(earnItModules);
     })
+    it('filters claim modules out correctly', () => {
+        const original = [
+            ...weeklyModules,
+            ...claimBadgeModules,
+        ]
+
+        const { remaining, removed } = sliceModulesOut(original, filterBadgeClaimModules);
+        expect(remaining).toEqual(weeklyModules);
+        expect(removed).toEqual(claimBadgeModules);
+    })
+
+    it('filters both earned it and claimed out', () => {
+        const original = [
+            ...weeklyModules,
+            ...earnItModules,
+            ...claimBadgeModules,
+        ]
+
+        const { remaining, removed } = sliceModulesOut(original, {
+            claimIt: filterBadgeClaimModules,
+            earnIt: filterBadgeEarnModules,
+        });
+        expect(remaining).toEqual(weeklyModules);
+        expect(removed).toEqual({
+            earnIt: earnItModules,
+            claimIt: claimBadgeModules,
+        });
+
+
+    })
+
 });
