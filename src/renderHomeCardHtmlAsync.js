@@ -1,21 +1,32 @@
+import {getModUrl} from "./toolbox/getModUrl.js";
+import {getImgUrl} from "./toolbox/getImgUrl.js";
+
 /**
  * Generates HTML for a "home card" module with customizable content.
  *
- * @param {string} name - The name of the module, potentially including a topic number.
- * @param {string} modUrl - The URL the card links to.
- * @param {string} [imgUrl] - The URL of the image to display on the card (optional).
- * @param {number} completedItems - The number of completed items in the module.
- * @param {number} totalItems - The total number of items in the module.
- * @param {string} [state] - The state of the module, such as "locked" (optional).
- * @returns {string} - The generated HTML string for the home card.
- */
-export function generateHomecardHtml(name, modUrl, imgUrl, completedItems, totalItems, state) {
+ * @param {object} mod - The canvas module
+ * @param {ScaffoldClient} scaffoldClient - the scaffoldClient instance for this theme
+ **/
+
+export async function renderHomeCardHtmlAsync(mod, scaffoldClient) {
+    const firstItem = mod.items.find(item => item.type !== "SubHeader");
+    const name = mod.name ? mod.name : "";
+
+    const modUrl = getModUrl(scaffoldClient, mod, firstItem);
+    const imgUrl = await getImgUrl(scaffoldClient, mod);
+
+    let completedItems = mod.items.filter(
+        item => item.type !== "SubHeader" && item.hasOwnProperty("completion_requirement") && item.completion_requirement.completed === true
+    ).length;
+    let totalItems = mod.items.filter(
+        item => item.type !== "SubHeader" && item.hasOwnProperty("completion_requirement")
+    ).length;
+
     let html = '<div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">';
 
-    const moduleClassNames = ['cbt-module-card'];
-    if (state && state === 'locked') moduleClassNames.push('cbt-module-locked');
+    const moduleClassNames = getModuleClassNames(mod);
 
-    html += `<a class="${moduleClassNames.join(' ')}" title="${name}" href="${modUrl}">`;
+    html += `<a class="${moduleClassNames}" title="${name}" href="${modUrl}">`;
     if (imgUrl) {
         html += `
             <div class="cbt-module-card-img">
@@ -45,4 +56,12 @@ export function generateHomecardHtml(name, modUrl, imgUrl, completedItems, total
     }
     html += '</div></a></div>';
     return html;
+}
+
+
+function getModuleClassNames(module) {
+    const { state } = module;
+    const moduleClassNames = ['cbt-module-card'];
+    if (state && state === 'locked') moduleClassNames.push('cbt-module-locked');
+    return moduleClassNames.join(' ');
 }

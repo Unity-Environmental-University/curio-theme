@@ -13,8 +13,8 @@
  *
  * @throws {Error} - If there is an issue with generating or fetching module data (e.g., missing image URL), an error is logged.
  */
-import {generateHomecardHtml} from "./generateHomecardHtml.js";
-import {getModUrl} from "./toolbox/getModUrl.js";
+import {renderHomeCardHtmlAsync} from "./renderHomeCardHtmlAsync.js";
+
 
 export const getHomeCards = async function (data, scaffoldClient) {
     if (typeof data !== 'object' || data.length === 0) {
@@ -34,22 +34,7 @@ export const getHomeCards = async function (data, scaffoldClient) {
             // Loop and display all module items in the accordion
 
             for (let mod of scaffoldClient.courseData.modules) {
-                const firstItem = mod.items.find(item => item.type !== "SubHeader");
-
-                const modUrl = getModUrl(scaffoldClient, mod, firstItem);
-                const imgUrl = await getImgUrl(scaffoldClient, mod);
-
-                let completedItems = mod.items.filter(item => item.type !== "SubHeader" && item.hasOwnProperty("completion_requirement") && item.completion_requirement.completed === true);
-                let totalItems = mod.items.filter(item => item.type !== "SubHeader" && item.hasOwnProperty("completion_requirement"));
-
-                cardHtmls.push(generateHomecardHtml(
-                    mod.name,
-                    modUrl,
-                    imgUrl,
-                    completedItems.length,
-                    totalItems.length,
-                    mod.state
-                ));
+                cardHtmls.push(renderHomeCardHtmlAsync(mod, scaffoldClient));
 
             }
 
@@ -61,11 +46,3 @@ export const getHomeCards = async function (data, scaffoldClient) {
 }
 
 
-async function getImgUrl(scaffoldClient, module) {
-    try {
-        return await scaffoldClient.getModImgURL("hometile" + module.position);
-    } catch (e) {
-        console.log("Cannot find the image" + e + "; stack: " + e.stack);
-        return 'https://i.stack.imgur.com/y9DpT.jpg';
-    }
-}
