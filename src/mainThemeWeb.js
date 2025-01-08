@@ -1,4 +1,4 @@
-import {getHomeCards} from "./getHomeCards.js";
+import {getHomeCardsAsync} from "./getHomeCardsAsync.js";
 
 var ScaffoldClient = (function (m, $) {
 
@@ -425,7 +425,7 @@ var ScaffoldClient = (function (m, $) {
 
                     // all progress items should consider discussions
                     if (document.querySelector(".cbt-home-cards")) {
-                        ScaffoldClient.getHomeCards(ScaffoldClient.courseData.modules, ScaffoldClient);
+                        ScaffoldClient.getHomeCardsAsync(ScaffoldClient.courseData.modules, ScaffoldClient);
                     }
 
                     if (document.querySelector(".cbt-course-progress")) {
@@ -5517,7 +5517,7 @@ var ScaffoldBuilder = (function (m, $) {
         console.log("``````End: Page as agreement;``````");
     };
 
-    m.getHomeCards = getHomeCards;
+    m.getHomeCardsAsync = getHomeCardsAsync;
     m.accordionList = function () {
         // Accordion
         function accordionToggle(event) {

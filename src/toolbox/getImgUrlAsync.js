@@ -1,4 +1,4 @@
-export async function getImgUrl(scaffoldClient, module) {
+export async function getImgUrlAsync(scaffoldClient, module) {
     try {
         return await scaffoldClient.getModImgURL("hometile" + module.position);
     } catch (e) {

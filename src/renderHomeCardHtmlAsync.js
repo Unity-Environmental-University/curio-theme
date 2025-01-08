@@ -1,5 +1,5 @@
 import {getModUrl} from "./toolbox/getModUrl.js";
-import {getImgUrl} from "./toolbox/getImgUrl.js";
+import {getImgUrlAsync} from "./toolbox/getImgUrlAsync.js";
 
 /**
  * Generates HTML for a "home card" module with customizable content.
@@ -13,7 +13,7 @@ export async function renderHomeCardHtmlAsync(mod, scaffoldClient) {
     const name = mod.name ? mod.name : "";
 
     const modUrl = getModUrl(scaffoldClient, mod, firstItem);
-    const imgUrl = await getImgUrl(scaffoldClient, mod);
+    const imgUrl = await getImgUrlAsync(scaffoldClient, mod);
 
     let completedItems = mod.items.filter(
         item => item.type !== "SubHeader" && item.hasOwnProperty("completion_requirement") && item.completion_requirement.completed === true
@@ -59,9 +59,15 @@ export async function renderHomeCardHtmlAsync(mod, scaffoldClient) {
 }
 
 
+
+const classnameChecks = [
+    { className: 'cbt-module-locked', test: (mod) => mod?.state === 'locked' },
+];
+
 function getModuleClassNames(module) {
-    const { state } = module;
     const moduleClassNames = ['cbt-module-card'];
-    if (state && state === 'locked') moduleClassNames.push('cbt-module-locked');
+    for(const { className, test } of classnameChecks) {
+        if(test(module)) {moduleClassNames.push(className);}
+    }
     return moduleClassNames.join(' ');
 }

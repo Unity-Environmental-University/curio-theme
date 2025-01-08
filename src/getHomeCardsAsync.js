@@ -16,7 +16,7 @@
 import {renderHomeCardHtmlAsync} from "./renderHomeCardHtmlAsync.js";
 
 
-export const getHomeCards = async function (data, scaffoldClient) {
+export const getHomeCardsAsync = async function (scaffoldClient, data) {
     if (typeof data !== 'object' || data.length === 0) {
         return Promise.resolve(false);
     }

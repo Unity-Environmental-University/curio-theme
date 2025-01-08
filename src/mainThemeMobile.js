@@ -1,4 +1,4 @@
-import {getHomeCards} from "./getHomeCards.js";
+import {getHomeCardsAsync} from "./getHomeCardsAsync.js";
 
 var ScaffoldClient = (function (m) {
 
@@ -404,7 +404,7 @@ var ScaffoldClient = (function (m) {
 
                     // all progress items should consider discussions
                     if (document.querySelector(".cbt-home-cards")) {
-                        ScaffoldClient.getHomecards(ScaffoldClient.courseData.modules); // custom based on the template
+                        await ScaffoldClient.getHomeCardsAsync(ScaffoldClient.courseData.modules, ScaffoldClient); // custom based on the template
                     }
                     if (document.querySelector(".cbt-course-progress")) {
                         ScaffoldClient.getContinueItem().then(function (item) {
@@ -758,7 +758,7 @@ var ScaffoldClient = (function (m) {
         var i;
         var tabs = document.querySelectorAll(".cbt-tabs");
         for (let tab of tabs) {
-            t_con = tab.getElementsByClassName("cbt-tab-content");
+            const t_con = tab.getElementsByClassName("cbt-tab-content");
             for (i = 1; i < t_con.length; i++) {
                 t_con[i].style.display = "none";
             }
@@ -916,7 +916,7 @@ var ScaffoldClient = (function (m) {
 
 // Dots functionality
             dotsNav.addEventListener("click", (e) => {
-                targetDot = e.target.closest("button");
+                const targetDot = e.target.closest("button");
                 if (!targetDot) return;
                 const currentSlide = track.querySelector(".cbt-carousel-current-slide");
                 const currentDot = dotsNav.querySelector(".cbt-carousel-current-slide");
@@ -1191,7 +1191,7 @@ var ScaffoldClient = (function (m) {
                             let banner = document.querySelector('.scaffold-media-box.cbt-banner.cbt-image-banner');
                             console.log(banner);
                             if (banner) {
-                                boilerplate = document.createElement('div');
+                                const boilerplate = document.createElement('div');
                                 banner.after(boilerplate);
                                 boilerplate.outerHTML = '<div class="scaffold-media-box cbt-content cbt-discussion-boilerplate" data-context-menu="insert delete" editable="false" caninsert="false" data-canhavechild="true">' +
                                     '<div class="cbt-callout-box" >' +
@@ -1252,7 +1252,7 @@ var ScaffoldClient = (function (m) {
                             let banner = document.querySelector('.scaffold-media-box.cbt-banner.cbt-image-banner');
                             console.log(banner);
                             if (banner) {
-                                boilerplate = document.createElement('div');
+                                const boilerplate = document.createElement('div');
                                 banner.after(boilerplate);
                                 boilerplate.outerHTML = '<div class="scaffold-media-box cbt-content cbt-discussion-boilerplate" data-context-menu="insert delete" editable="false" caninsert="false" data-canhavechild="true">' +
                                     '<div class="cbt-callout-box" >' +
@@ -1763,7 +1763,7 @@ var ScaffoldClient = (function (m) {
         var i;
         var tabs = document.querySelectorAll(".cbt-tabs");
         for (let tab of tabs) {
-            t_con = tab.getElementsByClassName("cbt-tab-content");
+            const t_con = tab.getElementsByClassName("cbt-tab-content");
             for (i = 1; i < t_con.length; i++) {
                 t_con[i].style.display = "none";
             }
@@ -2091,7 +2091,7 @@ var ScaffoldClient = (function (m) {
         console.log(`===========setWeeklyMaterials - END ============`);
     };
 
-    m.getHomecards = getHomeCards;
+    m.getHomeCardsAsync = getHomeCardsAsync;
     m.setAnnouncementsButton = function () {
         console.log(`========Announcements button==========`)
 
