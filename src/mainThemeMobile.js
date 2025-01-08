@@ -1,4 +1,4 @@
-import {getHomeCardsAsync} from "./getHomeCardsAsync.js";
+import {getHomeCardsAsync} from "./homeCards/getHomeCardsAsync.js";
 
 var ScaffoldClient = (function (m) {
 

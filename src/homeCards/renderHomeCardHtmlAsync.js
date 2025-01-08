@@ -1,5 +1,5 @@
-import {getModUrl} from "./toolbox/getModUrl.js";
-import {getImgUrlAsync} from "./toolbox/getImgUrlAsync.js";
+import {getModUrl} from "../toolbox/getModUrl.js";
+import {getImgUrlAsync} from "../toolbox/getImgUrlAsync.js";
 
 /**
  * Generates HTML for a "home card" module with customizable content.

@@ -14,6 +14,7 @@
  * @throws {Error} - If there is an issue with generating or fetching module data (e.g., missing image URL), an error is logged.
  */
 import {renderHomeCardHtmlAsync} from "./renderHomeCardHtmlAsync.js";
+import {filterBadgeClaimModules, filterBadgeEarnModules, sliceModulesOut} from "../toolbox/sliceModulesOut.js";
 
 
 export const getHomeCardsAsync = async function (scaffoldClient, data) {
@@ -29,20 +30,42 @@ export const getHomeCardsAsync = async function (scaffoldClient, data) {
             return !!container.querySelector('.cbt-module-card');
         };
 
-        if (scaffoldClient.courseData.modules && scaffoldClient.courseData.modules.length > 0 && !hasModuleCards(moduleCardsContainer)) {
-            let cardHtmls = [];
+        if (
+            scaffoldClient.courseData.modules &&
+            scaffoldClient.courseData.modules.length > 0
+            && !hasModuleCards(moduleCardsContainer)
+        ) {
             // Loop and display all module items in the accordion
 
-            for (let mod of scaffoldClient.courseData.modules) {
-                cardHtmls.push(renderHomeCardHtmlAsync(mod, scaffoldClient));
+            const filterResults = sliceModulesOut(scaffoldClient.courseData.modules, {
+                claimMods: filterBadgeClaimModules,
+                earnMods: filterBadgeEarnModules
+            });
 
+            const weeklyMods = filterResults.remaining;
+            const {claimMods, earnMods} = filterResults.removed;
+
+            const weeklyHtmlPromises = weeklyMods.map(mod => renderHomeCardHtmlAsync(mod, scaffoldClient));
+            const claimPromises = claimMods?.map(mod => renderHomeCardHtmlAsync(mod, scaffoldClient)) ?? [];
+            const earnPromises = earnMods?.map(mod => renderHomeCardHtmlAsync(mod, scaffoldClient)) ?? [];
+
+            const weeklyHtmls = (await Promise.all(weeklyHtmlPromises));
+            const earnBadgeHtmls = (await Promise.all(earnPromises));
+            const claimBadgeHtmls = (await Promise.all(claimPromises));
+
+
+            let html = `<div class="row ueu-weekly-module">${weeklyHtmls.join('\n')}</div>\n`;
+            if (claimBadgeHtmls.length > 0) {
+                html += `<div class="row ueu-claim-badge-module">${claimBadgeHtmls.join('\n')}</div>\n`;
+            }
+            if (earnBadgeHtmls.length > 0) {
+                html += `<div class="row ueu-earn-badge-module">${earnBadgeHtmls.join('\n')}</div>\n`;
             }
 
-            moduleCardsContainer.innerHTML = `<div class="row">${cardHtmls.join('\n')}</div>`;
+            moduleCardsContainer.innerHTML = html;
         }
     } catch (e) {
         console.log("getHomeCards error - " + e);
+        throw(e);
     }
 }
-
-
