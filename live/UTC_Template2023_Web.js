@@ -1885,13 +1885,15 @@ var ScaffoldClient = (function (m, $) {
     m.tab = function () {
         // Tab
         function tabDisplay(event) {
-            var code;
-            if (event.type === "keypress") {
-                code = event.charCode || event.keyCode;
+
+            if(event.type === "keypress") {
+                const keyCode = event.type === "keypress"? event.charCode || event.keyCode : undefined;
+                //Put any key press handlers here
             }
+
             if (event.type === "click" || code === 32 || code === 13) {
-                var t_con = event.currentTarget.closest('.cbt-tabs').getElementsByClassName("cbt-tab-content");
-                var tabs = event.currentTarget.closest('.cbt-tabs').getElementsByClassName("cbt-tab-trigger");
+                const t_con = event.currentTarget.closest('.cbt-tabs').getElementsByClassName("cbt-tab-content");
+                const tabs = event.currentTarget.closest('.cbt-tabs').getElementsByClassName("cbt-tab-trigger");
 
                 for (i = 0; i < t_con.length; i++) {
                     t_con[i].style.display = "none";
@@ -1909,10 +1911,10 @@ var ScaffoldClient = (function (m, $) {
             }
         }
 
-        var i;
-        var tabs = document.querySelectorAll(".cbt-tabs");
+        let i;
+        let tabs = document.querySelectorAll(".cbt-tabs");
         for (let tab of tabs) {
-            t_con = tab.getElementsByClassName("cbt-tab-content");
+            let t_con = tab.getElementsByClassName("cbt-tab-content");
             for (i = 1; i < t_con.length; i++) {
                 t_con[i].style.display = "none";
             }
