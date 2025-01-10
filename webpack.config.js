@@ -10,26 +10,30 @@ export default {
   mode: 'development',
   optimization: {
    minimize: false,
+   concatenateModules: true,
   },
-  devtool: "source-map",
-  entry: './src/mainThemeWeb.js',
+  devtool: false,
+  entry: {
+    web: './src/mainThemeWeb.js',       // Entry point for the web file
+    mobile: './src/mainThemeMobile.js', // Entry point for the mobile file
+  },
   output: {
     path: path.resolve(__dirname, 'build'),
-    filename: 'unityCanvasThemeWeb.js',
+    filename: 'ueu_canvas_theme_[name].js',
   },
   module: {
-    rules: [
-      {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/preset-env'],
-          },
-        },
-      },
-    ],
+    // rules: [
+    //   {
+    //     test: /\.js$/,
+    //     exclude: /node_modules/,
+    //     use: {
+    //       loader: 'babel-loader',
+    //       options: {
+    //         presets: ['@babel/preset-env'],
+    //       },
+    //     },
+    //   },
+    // ],
   },
   resolve: {
     fallback: {
