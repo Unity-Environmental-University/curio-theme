@@ -1,6 +1,6 @@
-export async function getImgUrlAsync(scaffoldClient, module) {
+export async function getImgUrlAsync(getModImgUrl, module) {
     try {
-        return await scaffoldClient.getModImgURL("hometile" + module.position);
+        return await getModImgUrl("hometile" + module.position);
     } catch (e) {
         console.log("Cannot find the image" + e + "; stack: " + e.stack);
         return 'https://i.stack.imgur.com/y9DpT.jpg';

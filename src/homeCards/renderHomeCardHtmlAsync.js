@@ -1,19 +1,13 @@
 import {getModUrl} from "../toolbox/getModUrl.js";
 import {getImgUrlAsync} from "../toolbox/getImgUrlAsync.js";
 
-/**
- * Generates HTML for a "home card" module with customizable content.
- *
- * @param {object} mod - The canvas module
- * @param {ScaffoldClient} scaffoldClient - the scaffoldClient instance for this theme
- **/
 
-export async function renderHomeCardHtmlAsync(mod, scaffoldClient) {
+export async function renderHomeCardHtmlAsync({getOrigin, getModImgURL}, mod) {
     const firstItem = mod.items.find(item => item.type !== "SubHeader");
     const name = mod.name ? mod.name : "";
 
-    const modUrl = getModUrl(scaffoldClient, mod, firstItem);
-    const imgUrl = await getImgUrlAsync(scaffoldClient, mod);
+    const modUrl = getModUrl({getOrigin}, mod, firstItem);
+    const imgUrl = await getImgUrlAsync(getModImgURL, mod);
 
     let completedItems = mod.items.filter(
         item => item.type !== "SubHeader" && item.hasOwnProperty("completion_requirement") && item.completion_requirement.completed === true

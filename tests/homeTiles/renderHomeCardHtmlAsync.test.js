@@ -31,7 +31,7 @@ describe('renderHomeCardHtmlAsync', () => {
     })
 
     it('should generate the correct HTML structure for a module card with completed items', async () => {
-        const result = await renderHomeCardHtmlAsync(mod, scaffoldClient);
+        const result = await renderHomeCardHtmlAsync(scaffoldClient, mod);
         expect(result).toContain('<a class="cbt-module-card cbt-module-locked"');
         expect(result).toContain('title="Module 1: Introduction"');
         expect(result).not.toContain('href="https://example.com/module1"');
@@ -44,11 +44,11 @@ describe('renderHomeCardHtmlAsync', () => {
     it('should generate urls for nonlocked modules', async () => {
         getModUrl.mockImplementationOnce(() => 'https://example.com/module1');
 
-        const result = await renderHomeCardHtmlAsync({
+        const result = await renderHomeCardHtmlAsync(scaffoldClient, {
             state: "active", ...mod, items: [
                 {completion_requirement: {completed: true}, html_url: 'https://example.com/'},
             ]
-        }, scaffoldClient);
+        });
 
         expect(result).toContain('href="https://example.com/module1"');
     });
