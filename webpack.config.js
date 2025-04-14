@@ -22,18 +22,18 @@ export default {
     filename: 'ueu_canvas_theme_[name].js',
   },
   module: {
-    // rules: [
-    //   {
-    //     test: /\.js$/,
-    //     exclude: /node_modules/,
-    //     use: {
-    //       loader: 'babel-loader',
-    //       options: {
-    //         presets: ['@babel/preset-env'],
-    //       },
-    //     },
-    //   },
-    // ],
+    rules: [
+      {
+        test: /\.(js|jsx)$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['@babel/preset-env','@babel/preset-react'],
+          },
+        },
+      },
+    ],
   },
   resolve: {
     fallback: {
@@ -44,4 +44,8 @@ export default {
   plugins: [
     new NodePolyfillPlugin(),
   ],
+  externals: {
+    react: 'React',
+    'react-dom': 'ReactDOM',
+  },
 };

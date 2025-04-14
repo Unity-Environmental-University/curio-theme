@@ -1,9 +1,12 @@
 import {afterOnLoad} from "./afterOnLoad.js";
 import {getNavHtml} from "./getNavHtml.js";
 import {afterInit} from "./afterInit.js";
-
+import {getModImgUrl} from "./getModImgUrl.js";
+import {displayRubric} from "./displayRubric.js";
+import {setupDiscussionNoticeAsync} from "./discussionUtils.js";
 
 export const createScaffoldClient = function (scaffoldClient, $) {
+
 
 
     scaffoldClient.modules = [
@@ -131,6 +134,10 @@ export const createScaffoldClient = function (scaffoldClient, $) {
 
         scaffoldClient.onloadset = true;
     };
+
+
+    scaffoldClient.getModImgURL = (filename) => getModImgUrl(scaffoldClient, filename);
+
 
     scaffoldClient.getCourseID = function () {
         if (scaffoldClient.options['courseid'] === undefined) {
@@ -513,6 +520,7 @@ export const createScaffoldClient = function (scaffoldClient, $) {
 
     };
 
+
     scaffoldClient.getUserName = function (data) {
         /* return user name */
         return new Promise(function (userRes, userRej) {
@@ -679,64 +687,6 @@ export const createScaffoldClient = function (scaffoldClient, $) {
         });
     };
 
-    scaffoldClient.getModImgURL = async function (filename) {
-        return new Promise(function (i, e) {
-            fetch(origin + "/api/v1/courses/" + scaffoldClient.getCourseID() + "/files?per_page=10000&content_types[]=image&search_term=" + filename, {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    "Accept": "application/json",
-                    "X-CSRF-Token": scaffoldClient.getCsrfToken()
-                }
-            })
-                .then(scaffoldClient.fetchstatus)
-                .then(scaffoldClient.fetchjson)
-                .then(function (files) {
-                    var module_img_url = 'https://i.stack.imgur.com/y9DpT.jpg'; //default image
-                    for (let file of files) {
-                        if (file.display_name === filename + ".png" || file.display_name === filename + ".jpg") {
-                            module_img_url = scaffoldClient.getOrigin() + "/courses/" + scaffoldClient.getCourseID() + "/files/" + file.id + "/preview";
-                            //img_id = file.id
-                        }
-                    }
-                    i(module_img_url);
-                }).catch(function (error) {
-                console.log('getModImgURL request failed' + error);
-                e('https://i.stack.imgur.com/y9DpT.jpg');
-            });
-        })
-
-        function console2(message) {
-            let console = document.getElementById("console2");
-            if (scaffoldClient.getCourseID() == "3829777") {
-                if (!console) {
-                    console = createConsole();
-                }
-                console.innerHTML = message;
-            }
-
-            function createConsole() {
-                let targetNode = document.querySelector('.cbt-footer-container').parentNode;
-                let elem = document.createElement("div");
-                elem.id = "console2";
-                applyStyle(elem);
-                targetNode.insertBefore(elem, document.querySelector('.cbt-footer-container'));
-                return elem;
-            }
-
-            function applyStyle(elem) {
-                elem.style.position = "fixed";
-                elem.style.top = "0";
-                elem.style.left = "0";
-                elem.style.width = "100vw";
-                elem.style.height = "100vh";
-                elem.style.background = "rgba(255,255,255,0.3)";
-                elem.style.color = "#000";
-                elem.style.zIndex = "2000";
-            }
-        }
-    };
-
     scaffoldClient.initMarkableDiscussion = function () {
         const markable_discussion = {
             dataHandler: {
@@ -845,46 +795,55 @@ export const createScaffoldClient = function (scaffoldClient, $) {
             init: function () {
                 // check task status
                 markable_discussion.dataHandler.getData().then(function (e) {
-                    console.log("Data exists");
-                    markable_discussion.dataHandler.data = e;
-                    console.log(markable_discussion.dataHandler.data);
-                    if (scaffoldClient.courseData.currentItem && scaffoldClient.courseData.currentItem.hasOwnProperty("type") && scaffoldClient.courseData.currentItem.type === 'Discussion') { // they have to be a module item
-                        var discussionId = 'task-' + (Object.keys(scaffoldClient.courseData.currentModule).length > 0 ? scaffoldClient.courseData.currentItem.content_id : scaffoldClient.courseData.currentItem.id); // this is module item id
-                        var tasks = document.querySelectorAll('.cbt-manual-mark-btn');
-                        if (tasks && tasks.length == 2) {
-                            let banner = document.querySelector('.scaffold-media-box.cbt-banner.cbt-image-banner');
-                            console.log(banner);
-                            if (banner) {
-                                const boilerplate = document.createElement('div');
-                                banner.after(boilerplate);
-                                boilerplate.outerHTML = '<div class="scaffold-media-box cbt-content cbt-discussion-boilerplate" data-context-menu="insert delete" editable="false" caninsert="false" data-canhavechild="true">' +
-                                    `<div class="cbt-callout-box" > 
-                                <p><strong>In most Unity DE Discussions, you must post your own initial response
-                                to the prompt before you will be able to view and/or respond to your peers’ posts.</strong></p>
-                                </div> 
-                                </div>`;
+                        console.log("Data exists");
+                        markable_discussion.dataHandler.data = e;
+                        console.log(markable_discussion.dataHandler.data);
+                        if (scaffoldClient.courseData.currentItem && scaffoldClient.courseData.currentItem.hasOwnProperty("type") && scaffoldClient.courseData.currentItem.type === 'Discussion') { // they have to be a module item
+                            var discussionId = (Object.keys(scaffoldClient.courseData.currentModule).length > 0 ? scaffoldClient.courseData.currentItem.content_id : scaffoldClient.courseData.currentItem.id); // this is module item id
+
+                            var taskDiscussionId = 'task-' + discussionId;
+                            var tasks = document.querySelectorAll('.cbt-manual-mark-btn');
+                            if (tasks && tasks.length == 2) {
+
+                                setupDiscussionNoticeAsync(discussionId, scaffoldClient.getCourseID()).then();
+                                if (markable_discussion.dataHandler.data[taskDiscussionId]) {
+                                    var btns = markable_discussion.dataHandler.data[taskDiscussionId];
+                                    for (let i = 0; i < tasks.length; i++) {
+                                        /* Identify if the button is clicked or not */
+                                        let currentTaskId = taskDiscussionId + '-btn-' + i;
+                                        if (btns.indexOf(currentTaskId) > -1) {
+                                            tasks[i].innerHTML = '<button class="btn utc-mark-done" data-discussion-done-id="' + currentTaskId + '" ><i class="utc-icon-checkmark-circle"></i> <span class="mark-done-labels"><span class="visible">Done</span></span></button>';
+                                        } else {
+                                            tasks[i].innerHTML = '<button class="btn" data-discussion-done-id="' + currentTaskId + '" ><i class="utc-icon-empty"></i> <span class="mark-done-labels"><span class="visible">Mark as done.</span></span></button>';
+                                        }
+                                        tasks[i].querySelector('button').addEventListener("click", (e) => {
+                                            var currTaskID = e.currentTarget.getAttribute("data-discussion-done-id");
+                                            console.log(currTaskID);
+                                            markable_discussion.ui.updateTaskHTML(currTaskID, e.currentTarget);
+                                        })
+                                    }
+                                } else {
+                                    markable_discussion.dataHandler.data[taskDiscussionId] = [];
+                                    for (let i = 0; i < tasks.length; i++) {
+                                        /* Default status */
+                                        tasks[i].innerHTML = '<button class="btn" data-discussion-done-id="task-' + taskDiscussionId + '-btn-' + i + '" ><i class="utc-icon-empty"></i> <span class="mark-done-labels"><span class="visible">Mark as done.</span></span></button>';
+                                        tasks[i].querySelector('button').addEventListener("click", (e) => {
+                                            var currTaskID = e.currentTarget.getAttribute("data-discussion-done-id");
+                                            console.log(currTaskID);
+                                            markable_discussion.ui.updateTaskHTML(currTaskID, e.currentTarget);
+                                        })
+                                    }
+                                }
                             }
                         }
+                    },
 
 
-                        if (markable_discussion.dataHandler.data[discussionId]) {
-                            var btns = markable_discussion.dataHandler.data[discussionId];
-                            for (let i = 0; i < tasks.length; i++) {
-                                /* Identify if the button is clicked or not */
-                                let currentTaskId = discussionId + '-btn-' + i;
-                                if (btns.indexOf(currentTaskId) > -1) {
-                                    tasks[i].innerHTML = '<button class="btn utc-mark-done" data-discussion-done-id="' + currentTaskId + '" ><i class="utc-icon-checkmark-circle"></i> <span class="mark-done-labels"><span class="visible">Done</span></span></button>';
-                                } else {
-                                    tasks[i].innerHTML = '<button class="btn" data-discussion-done-id="' + currentTaskId + '" ><i class="utc-icon-empty"></i> <span class="mark-done-labels"><span class="visible">Mark as done.</span></span></button>';
-                                }
-                                tasks[i].querySelector('button').addEventListener("click", (e) => {
-                                    var currTaskID = e.currentTarget.getAttribute("data-discussion-done-id");
-                                    console.log(currTaskID);
-                                    markable_discussion.ui.updateTaskHTML(currTaskID, e.currentTarget);
-                                })
-                            }
-                        } else {
-                            markable_discussion.dataHandler.data[discussionId] = [];
+                    function (e) {
+                        console.log("No Data, create new data");
+                        if (scaffoldClient.courseData.currentItem && scaffoldClient.courseData.currentItem.hasOwnProperty("type") && scaffoldClient.courseData.currentItem.type === 'Discussion') { // they have to be a module item
+                            let tasks = document.querySelectorAll('.cbt-manual-mark-btn');
+                            var discussionId = Object.keys(scaffoldClient.courseData.currentModule).length > 0 ? scaffoldClient.courseData.currentItem.content_id : scaffoldClient.courseData.currentItem.id; // this is module item id
                             for (let i = 0; i < tasks.length; i++) {
                                 /* Default status */
                                 tasks[i].innerHTML = '<button class="btn" data-discussion-done-id="task-' + discussionId + '-btn-' + i + '" ><i class="utc-icon-empty"></i> <span class="mark-done-labels"><span class="visible">Mark as done.</span></span></button>';
@@ -894,42 +853,15 @@ export const createScaffoldClient = function (scaffoldClient, $) {
                                     markable_discussion.ui.updateTaskHTML(currTaskID, e.currentTarget);
                                 })
                             }
-                        }
-                    }
 
-
-                }, function (e) {
-                    console.log("No Data, create new data");
-                    if (scaffoldClient.courseData.currentItem && scaffoldClient.courseData.currentItem.hasOwnProperty("type") && scaffoldClient.courseData.currentItem.type === 'Discussion') { // they have to be a module item
-                        var tasks = document.querySelectorAll('.cbt-manual-mark-btn');
-                        var discussionId = Object.keys(scaffoldClient.courseData.currentModule).length > 0 ? scaffoldClient.courseData.currentItem.content_id : scaffoldClient.courseData.currentItem.id; // this is module item id
-                        for (let i = 0; i < tasks.length; i++) {
-                            /* Default status */
-                            tasks[i].innerHTML = '<button class="btn" data-discussion-done-id="task-' + discussionId + '-btn-' + i + '" ><i class="utc-icon-empty"></i> <span class="mark-done-labels"><span class="visible">Mark as done.</span></span></button>';
-                            tasks[i].querySelector('button').addEventListener("click", (e) => {
-                                var currTaskID = e.currentTarget.getAttribute("data-discussion-done-id");
-                                console.log(currTaskID);
-                                markable_discussion.ui.updateTaskHTML(currTaskID, e.currentTarget);
-                            })
-                        }
-                        var tasks = document.querySelectorAll('.cbt-manual-mark-btn');
-                        if (tasks && tasks.length == 2) {
-                            let banner = document.querySelector('.scaffold-media-box.cbt-banner.cbt-image-banner');
-                            console.log(banner);
-                            if (banner) {
-                                const boilerplate = document.createElement('div');
-                                banner.after(boilerplate);
-                                boilerplate.outerHTML = '<div class="scaffold-media-box cbt-content cbt-discussion-boilerplate" data-context-menu="insert delete" editable="false" caninsert="false" data-canhavechild="true">' +
-                                    `<div class="cbt-callout-box" > 
-                            <p><strong>In most Unity DE Discussions, you must post your own initial response to the prompt 
-                            before you will be able to view and/or respond to your peers’ posts.</strong></p>
-                            </div>
-                            </div>`;
+                            tasks = document.querySelectorAll('.cbt-manual-mark-btn');
+                            if (tasks && tasks.length == 2) {
+                                setupDiscussionNoticeAsync(discussionId, scaffoldClient.getCourseID()).then();
                             }
-                        }
 
+                        }
                     }
-                })
+                )
             }
         }
 
@@ -989,57 +921,9 @@ export const createScaffoldClient = function (scaffoldClient, $) {
 
     };
 
-    scaffoldClient.displayRubric = function () {
-        let rubricBtns = document.querySelectorAll('.cbt-rubric-btn');
 
-        for (let rubricBtn of rubricBtns) {
-            let rubricUrl = rubricBtn.querySelector('a');
-            //if(rubricUrl && rubricUrl.href && /.*\/assignments\/\d+\/rubric$/.test(rubricUrl.href)){// remove rubrics
-            let rubricText = rubricUrl.text ? rubricUrl.text : 'Show Rubric';
-            if (rubricUrl && rubricUrl.href && /.*\/assignments\/\d+(\/rubric)?\/?$/.test(rubricUrl.href)) {
-                rubricBtn.innerHTML = `<button class="btn" data-rubric-link="${rubricUrl.href}">${rubricText}</button>`;
-                rubricBtn.addEventListener("click", (e) => {
-                    const rubricDiv = e.currentTarget;
-                    let rubricBtn = e.currentTarget.querySelector('button');
-                    let rubricContent = rubricDiv.querySelector('.cbt-rubric-content');
-                    if (rubricDiv && !rubricContent) {
-                        console.log(rubricDiv);
-                        let rubricUrl = rubricBtn.getAttribute("data-rubric-link");
-                        rubricUrl = rubricUrl.endsWith("/rubric") ? rubricUrl : `${rubricUrl}/rubric`;//add rubric url "" /rubric, then add
-                        console.log(`rubricUrl: "${rubricUrl}"`)
-                        try {
-                            var xhr = new XMLHttpRequest();
-                            xhr.onload = function () {
-                                var rubricDoc = new DOMParser().parseFromString(this.response, "text/html");
-                                console.log(rubricDoc.getElementById('rubrics'));
-                                rubricDiv.innerHTML += '<div class="cbt-rubric-content" style="display:block" aria-hidden="false"><button><span class="ui-icon ui-icon-closethick">Close</span></button>' + rubricDoc.getElementById('rubrics').innerHTML + '</div>';
-                                rubricDiv.querySelector(".cbt-rubric-content > button").addEventListener("click", (e) => {
-                                    e.currentTarget.parentNode.style.display = "none";
-                                })
-                            };
-                            xhr.open('GET', rubricUrl, true);
-                            xhr.send();
-                        } catch (error) {
-                            console.error(error);
-                        }
-                    } else {
-                        if (e.target.getAttribute("data-rubric-link")) {
-                            if (rubricContent.style.display == "block") {
-                                rubricContent.style.display = "none";
-                                rubricContent.setAttribute('aria-hidden', 'true');
-                            } else {
-                                rubricContent.style.display = "block";
-                                rubricContent.setAttribute('aria-hidden', 'false');
-                            }
-                        }
+    scaffoldClient.displayRubric = displayRubric;
 
-                    }
-                })
-            }
-        }
-
-
-    };
 
     scaffoldClient.setPageAsAgreement = function () {
 
