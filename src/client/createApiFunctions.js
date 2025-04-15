@@ -1,4 +1,4 @@
-import {getNavHtml} from "./getNavHtml.js";
+import {getNavHtml} from "../toolbox/getNavHtml.js";
 import {getHomeCardsAsync} from "../homeCards/getHomeCardsAsync.js";
 
 export const createApiFunctions = function (scaffoldClient) {
@@ -6,13 +6,13 @@ export const createApiFunctions = function (scaffoldClient) {
     const {
         options,
         courseData,
+        displayRubric,
         setWeeklyMaterials,
         initMarkableDiscussion,
         getModItemsProgress,
         getContinueItem,
         setCourseProgressBlock,
         getTopicOverview,
-        displayRubric,
         getUserName,
         preloadPromises,
         snippetCopy,
@@ -95,9 +95,10 @@ export const createApiFunctions = function (scaffoldClient) {
 
         if (courseData.currentItem && courseData.currentItem.hasOwnProperty('type') && courseData.currentItem.type === 'Discussion') {
             initMarkableDiscussion();
-            if (document.querySelector('#cbt-banner-header') && document.querySelector('.discussion-redesign-layout h2')) {
-                document.querySelector('.discussion-redesign-layout h2').remove();
-            }
+            //I don't know why this is here but it's likely outdated and eating Introduction headers.
+            // if (document.querySelector('#cbt-banner-header') && document.querySelector('.discussion-redesign-layout h2')) {
+            //     document.querySelector('.discussion-redesign-layout h2').remove();
+            // }
         }
 
         if (document.querySelector('.cbt-weekly-materials')) {

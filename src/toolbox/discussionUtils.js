@@ -1,8 +1,8 @@
 import {DiscussionNotice} from "../components/DiscussionNotice.js";
 
 /**
- * @type {import('./types').IDiscussionUtilsScaffoldClientView}
- * @type {import('./types.js').IDiscussionData}
+ * @type {import('../client/types.js').IDiscussionUtilsScaffoldClientView}
+ * @type {import('../client/types.d.ts').IDiscussionData}
  **/
 const _discussionCache = {};
 const _discussionsByAssignmentId = {};

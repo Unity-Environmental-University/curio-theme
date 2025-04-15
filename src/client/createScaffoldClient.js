@@ -1,14 +1,15 @@
 import {afterOnLoad} from "./afterOnLoad.js";
-import {getNavHtml} from "./getNavHtml.js";
+import {getNavHtml} from "../toolbox/getNavHtml.js";
 import {afterInit} from "./afterInit.js";
-import {getModImgUrl} from "./getModImgUrl.js";
+import {getModImgUrl} from "../toolbox/getModImgUrl.js";
 import {displayRubric} from "./displayRubric.js";
-import {setupDiscussionNoticeAsync} from "./discussionUtils.js";
+import {setupDiscussionNoticeAsync} from "../toolbox/discussionUtils.js";
+import {canvasModuleUtils} from "../toolbox/canvasModuleUtils.js";
+import {currentModuleHelper} from "../toolbox/currentModuleHelper.js";
+import {getCourseId} from "./hooks/useDocInfo.js";
+import {accordionList} from "../components/accordionList.js";
 
 export const createScaffoldClient = function (scaffoldClient, $) {
-
-
-
     scaffoldClient.modules = [
         'carousel_1',
         'blockquote_14',
@@ -136,7 +137,7 @@ export const createScaffoldClient = function (scaffoldClient, $) {
     };
 
 
-    scaffoldClient.getModImgURL = (filename) => getModImgUrl(scaffoldClient, filename);
+    scaffoldClient.getModImgURL = (filename) => getModImgUrl(filename);
 
 
     scaffoldClient.getCourseID = function () {
@@ -157,21 +158,7 @@ export const createScaffoldClient = function (scaffoldClient, $) {
         return scaffoldClient.options.courseid;
     };
 
-    scaffoldClient.getCsrfToken = function () {
-        var csrfRegex = new RegExp('^_csrf_token=(.*)$');
-        var csrf;
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
-            var cookie = cookies[i].trim();
-            var match = csrfRegex.exec(cookie);
-            if (match) {
-                csrf = decodeURIComponent(match[1]);
-                break;
-            }
-        }
-        return csrf;
-    };
-
+    scaffoldClient.getCsrfToken = getCsrfToken,
     scaffoldClient.getOrigin = function () {
         return scaffoldClient.options.origin;
     };
@@ -235,87 +222,7 @@ export const createScaffoldClient = function (scaffoldClient, $) {
     };
 
 
-    scaffoldClient.accordionList = function () {
-        // Accordion
-        function accordionToggle(event) {
-            var code;
-            if (event.type === "keypress") {
-                code = event.charCode || event.keyCode;
-            }
-            if (event.type === "click" || code === 32 || code === 13) {
-                var parent = event.currentTarget.parentNode;
-                if (!parent.classList.contains('active')) {
-                    event.currentTarget.setAttribute('aria-expanded', 'true');
-                    event.currentTarget.setAttribute('aria-select', 'true');
-                    parent.classList.add('active');
-
-                    parent.querySelector('.cbt-accordion-content').classList.toggle('cbt-answer');
-
-                    parent.querySelector('.cbt-accordion-content').setAttribute('aria-hidden', 'false');
-                    //reload iframe when it open
-                    var iframes = parent.querySelectorAll('iframe');
-                    if (iframes.length > 0) {
-                        for (var i = 0; i < iframes.length; i++) {
-                            iframes[i].src = iframes[i].src;
-                        }
-                    }
-                } else {
-                    parent.querySelector('.cbt-accordion-content').classList.toggle('cbt-answer');
-                    parent.classList.remove('active');
-
-                    event.currentTarget.setAttribute('aria-expanded', 'false');
-                    event.currentTarget.setAttribute('aria-select', 'false');
-
-                }
-                accordionToggleIcon(event.currentTarget);
-            }
-        }
-
-
-        const acc = document.querySelectorAll('.cbt-accordion-list .cbt-accordion-header');
-        var i;
-        for (i = 0; i < acc.length; i++) {
-            var ctrl_name = 'cbt_panel_' + i + '_content';
-            var label_name = 'cbt_panel_' + i;
-            acc[i].tabIndex = "0";
-            acc[i].role = "tab";
-            acc[i].id = label_name;
-            acc[i].setAttribute('aria-expanded', 'false');
-            acc[i].setAttribute('aria-select', 'false');
-            acc[i].setAttribute('aria-controls', ctrl_name);
-
-            var parent = acc[i].parentNode;
-            parent.role = "tablist"
-            if (parent.querySelector('.cbt-accordion-content')) {
-                parent.querySelector('.cbt-accordion-content').id = ctrl_name;
-                parent.querySelector('.cbt-accordion-content').tabIndex = "0";
-                parent.querySelector('.cbt-accordion-content').role = "tabpanel";
-                parent.querySelector('.cbt-accordion-content').setAttribute('aria-hidden', 'true');
-                parent.querySelector('.cbt-accordion-content').setAttribute('aria-labelledby', label_name);
-            }
-            loadAccordionIcon(acc[i]);
-            acc[i].addEventListener("click", accordionToggle);
-            acc[i].addEventListener("keypress", accordionToggle);
-        }
-        ;
-
-        function loadAccordionIcon(headerElem) {
-            if (!headerElem.querySelector('.cbt-accordion-close, .cbt-accordion-open')) {
-                if (parent.querySelector('.cbt-accordion-content.cbt-answer')) {
-                    headerElem.innerHTML += '<i class="cbt-accordion-close"></i>';
-                } else {
-                    headerElem.innerHTML += '<i class="cbt-accordion-open"></i>';
-                }
-            }
-        }
-
-        function accordionToggleIcon(headerElem) {
-            headerElem.querySelector("i").classList.toggle("cbt-accordion-close");
-            headerElem.querySelector("i").classList.toggle("cbt-accordion-open");
-        }
-
-
-    };
+    scaffoldClient.accordionList = accordionList;
 
     scaffoldClient.tabs = function () {
         // Tab
@@ -606,7 +513,7 @@ export const createScaffoldClient = function (scaffoldClient, $) {
     };
 
     scaffoldClient.findNavItems = async function () {
-        let courseId = scaffoldClient.getCourseID();
+        let courseId = getCourseId();
         let pageType = '';
         let pageId;
 
@@ -691,7 +598,7 @@ export const createScaffoldClient = function (scaffoldClient, $) {
         const markable_discussion = {
             dataHandler: {
                 data: {},
-                ns: "cbt_discussion_" + scaffoldClient.getCourseID(),
+                ns: "cbt_discussion_" + getCourseId(),
                 getData: function () {
                     var e = {
                         ns: markable_discussion.dataHandler.ns
@@ -873,7 +780,7 @@ export const createScaffoldClient = function (scaffoldClient, $) {
             /* Circular progress bar */
             if (!scaffoldClient.courseData || !scaffoldClient.courseData.modules || scaffoldClient.courseData.modules == 0) {
                 //console.log('cannot find course Data :(');
-                let moduleItemUrl = origin + "/api/v1/courses/" + scaffoldClient.getCourseID() + "/modules?per_page=100&include[]=items";
+                let moduleItemUrl = origin + "/api/v1/courses/" + getCourseId() + "/modules?per_page=100&include[]=items";
                 scaffoldClient.fetchResults(moduleItemUrl, scaffoldClient.courseData.saveModuleItems);
             } else {
                 var publishedModules = scaffoldClient.courseData.modules.filter((m) => {
@@ -926,7 +833,7 @@ export const createScaffoldClient = function (scaffoldClient, $) {
 
         const pageInfo = scaffoldClient.pageInfo;
         displayRubric({
-            courseId: scaffoldClient.getCourseID(),
+            courseId: useCourseId,
             ...pageInfo,
         });
     }
@@ -1188,103 +1095,8 @@ export const createScaffoldClient = function (scaffoldClient, $) {
                     }
                 }
             }
-
         }
 
-        function canvasModuleUtils() {
-            return {
-                pageInfo: {},
-                urlTypes: ['Module Item', 'Page', 'Assignment', 'Quiz', 'Discussion', 'ExternalTool', 'File'],
-                parseUrl: function (url) {
-                    const urlSegments = url.split('/');
-
-                    if (url.includes('module_item_id=')) {
-                        const pageUrl = url.split("module_item_id=")[1];
-                        return {type: 'Module Item', id: pageUrl};
-                    } else if (url.includes('/pages/')) {
-                        const pageUrlIndex = urlSegments.indexOf('pages') + 1;
-                        const pageUrl = urlSegments[pageUrlIndex];
-                        return {type: 'Page', id: pageUrl};
-                    } else if (url.includes('/assignments/')) {
-                        const assignmentIdIndex = urlSegments.indexOf('assignments') + 1;
-                        const assignmentId = urlSegments[assignmentIdIndex];
-                        return {type: 'Assignment', id: assignmentId};
-                    } else if (url.includes('/quizzes/')) {
-                        const quizIdIndex = urlSegments.indexOf('quizzes') + 1;
-                        const quizId = urlSegments[quizIdIndex];
-                        return {type: 'Quiz', id: quizId};
-                    } else if (url.includes('/discussion_topics/')) {
-                        const discussionIdIndex = urlSegments.indexOf('discussion_topics') + 1;
-                        const discussionId = urlSegments[discussionIdIndex];
-                        return {type: 'Discussion', id: discussionId};
-                    } else if (url.includes('/external_tools/')) {
-                        const toolIdIndex = urlSegments.indexOf('external_tools') + 1;
-                        const toolId = urlSegments[toolIdIndex];
-                        return {type: 'ExternalTool', id: toolId};
-                    } else if (url.includes('/files/')) {
-                        const fileIdIndex = urlSegments.indexOf('files') + 1;
-                        const fileId = urlSegments[fileIdIndex];
-                        return {type: 'File', id: fileId};
-                    } else if (url.includes('/modules/') && url.includes('#')) {
-                        const moduleItemIdIndex = urlSegments.indexOf('modules') + 1;
-                        const moduleItemId = urlSegments[moduleItemIdIndex].split("#")[1];
-                        return {type: 'Module Item', id: moduleItemId};
-                    } else if (url.includes('/modules/') && url.includes('/items/')) {
-                        const moduleItemIdIndex = urlSegments.indexOf('items') + 1;
-                        const moduleItemId = urlSegments[moduleItemIdIndex];
-                        //console.log(`moduleItemId ${moduleItemId}`);
-                        return {type: 'Module Item', id: moduleItemId};
-                    } else if (url.includes('/assignment_groups/')) {
-                        // const assignmentGroupIdIndex = urlSegments.indexOf('assignment_groups') + 1;
-                        // const assignmentGroupId = urlSegments[assignmentGroupIdIndex];
-                        // return { type: 'Assignment Group', id: assignmentGroupId };
-                    } else {
-                        return {type: 'Unknown', id: null};
-                    }
-                },
-                setUrl: function (url) {
-                    let filteredID = filterIDString(this.parseUrl(url))
-                    this.pageInfo.info = filteredID;
-
-                    function filterIDString(infoObj) {
-                        let id = infoObj.id;
-                        if (id) {
-                            // Check if invalid characters (#, &, ?) are in the middle of the slug string
-                            if (/\D[#&?]\D/.test(id)) {
-                                return null; // Return null if invalid characters are in the middle
-                            }
-
-                            // Remove invalid characters (#, &, ?) using regular expression
-                            infoObj.id = id.replace(/[#&?]/g, '');
-                        }
-
-                        return infoObj;
-                    }
-                },
-                matchesModuleItem: function (moduleItem) {
-                    let info = this.pageInfo.info;
-                    if (!moduleItem || !info) {
-                        console.log(`error not match`)
-                        return false;
-                    }
-
-                    ////console.log(`wassa: ${info.type}`)
-                    // 'File', 'Page', 'Discussion',
-                    // 'Assignment', 'Quiz', 'SubHeader', 'ExternalUrl', 'ExternalTool'
-                    if (this.urlTypes.some((item) => item === moduleItem.type)) {
-                        if (info.type == 'Module Item') {
-                            return moduleItem.id == info.id
-                        }
-                        if (info.type == 'Page') {
-                            return moduleItem.page_url == info.id
-                        }
-                        return moduleItem.content_id == info.id
-                    }
-
-                    return (false);
-                }
-            }
-        }
 
         console.log("``````End: Page as agreement;``````");
     };
@@ -1518,9 +1330,10 @@ export const createScaffoldClient = function (scaffoldClient, $) {
 
     scaffoldClient.setWeeklyMaterials = function () {
 
+        const courseId = getCourseId();
         function console2(message) {
             let console = document.getElementById("console2");
-            if (scaffoldClient.getCourseID() == "3829777") {
+            if (courseId.toString() === "3829777") {
                 if (!console) {
                     console = createConsole();
                 }
@@ -1556,9 +1369,6 @@ export const createScaffoldClient = function (scaffoldClient, $) {
         }
 
         console.log(`===========setWeeklyMaterials============`);
-
-        //scaffoldClient.courseData.currentModule.id
-
         // get current module items
 
         // check each for their completion, type and link
@@ -1569,7 +1379,6 @@ export const createScaffoldClient = function (scaffoldClient, $) {
         // set icon
 
         // place list items
-
         init();
 
         function init() {
@@ -1621,16 +1430,13 @@ export const createScaffoldClient = function (scaffoldClient, $) {
 
         function getCurrentModuleItems() {
             try {
-                // console.log(`getCurrentModuleItems()`);
                 let currentModuleID = scaffoldClient.courseData.currentModule.id;
                 if (!currentModuleID) {//for mobile app
-                    // console.log(`!currentModuleID`);
                     currentModuleID = getCurrentModuleID();
                 }
 
                 // console.log(`currentModuleID: ${currentModuleID}`);
-                let currentModuleItems = scaffoldClient.courseData.modules.reduce((acc, module, index, array) => module.id && module.id === currentModuleID ? module.items : acc, []);
-                return currentModuleItems;
+                return scaffoldClient.courseData.modules.reduce((acc, module, index, array) => module.id && module.id === currentModuleID ? module.items : acc, []);
             } catch (e) {
                 console.log(`error: ${e} || error.message: {${e.message} || error.stack: {${e.stack}}`);
             }
@@ -1973,148 +1779,7 @@ export const createScaffoldClient = function (scaffoldClient, $) {
             }
         }
     };
-
-    scaffoldClient.canvasModuleUtils = function () {
-        return {
-            pageInfo: {},
-            urlTypes: ['Module Item', 'Page', 'Assignment', 'Quiz', 'Discussion', 'ExternalTool', 'File'],
-            parseUrl: function (url) {
-                const urlSegments = url.split('/');
-
-                if (url.includes('module_item_id=')) {
-                    const pageUrl = url.split("module_item_id=")[1];
-                    return {type: 'Module Item', id: pageUrl};
-                } else if (url.includes('/pages/')) {
-                    const pageUrlIndex = urlSegments.indexOf('pages') + 1;
-                    const pageUrl = urlSegments[pageUrlIndex];
-                    return {type: 'Page', id: pageUrl};
-                } else if (url.includes('/assignments/')) {
-                    const assignmentIdIndex = urlSegments.indexOf('assignments') + 1;
-                    const assignmentId = urlSegments[assignmentIdIndex];
-                    return {type: 'Assignment', id: assignmentId};
-                } else if (url.includes('/quizzes/')) {
-                    const quizIdIndex = urlSegments.indexOf('quizzes') + 1;
-                    const quizId = urlSegments[quizIdIndex];
-                    return {type: 'Quiz', id: quizId};
-                } else if (url.includes('/discussion_topics/')) {
-                    const discussionIdIndex = urlSegments.indexOf('discussion_topics') + 1;
-                    const discussionId = urlSegments[discussionIdIndex];
-                    return {type: 'Discussion', id: discussionId};
-                } else if (url.includes('/external_tools/')) {
-                    const toolIdIndex = urlSegments.indexOf('external_tools') + 1;
-                    const toolId = urlSegments[toolIdIndex];
-                    return {type: 'ExternalTool', id: toolId};
-                } else if (url.includes('/files/')) {
-                    const fileIdIndex = urlSegments.indexOf('files') + 1;
-                    const fileId = urlSegments[fileIdIndex];
-                    return {type: 'File', id: fileId};
-                } else if (url.includes('/modules/') && url.includes('#')) {
-                    const moduleItemIdIndex = urlSegments.indexOf('modules') + 1;
-                    const moduleItemId = urlSegments[moduleItemIdIndex].split("#")[1];
-                    return {type: 'Module Item', id: moduleItemId};
-                } else if (url.includes('/modules/') && url.includes('/items/')) {
-                    const moduleItemIdIndex = urlSegments.indexOf('items') + 1;
-                    const moduleItemId = urlSegments[moduleItemIdIndex];
-                    //console.log(`moduleItemId ${moduleItemId}`);
-                    return {type: 'Module Item', id: moduleItemId};
-                } else if (url.includes('/assignment_groups/')) {
-                    // const assignmentGroupIdIndex = urlSegments.indexOf('assignment_groups') + 1;
-                    // const assignmentGroupId = urlSegments[assignmentGroupIdIndex];
-                    // return { type: 'Assignment Group', id: assignmentGroupId };
-                } else {
-                    return {type: 'Unknown', id: null};
-                }
-            },
-            setUrl: function (url) {
-                let filteredID = filterIDString(this.parseUrl(url))
-                this.pageInfo.info = filteredID;
-
-                function filterIDString(infoObj) {
-                    let id = infoObj.id;
-                    if (id) {
-                        // Check if invalid characters (#, &, ?) are in the middle of the slug string
-                        if (/\D[#&?]\D/.test(id)) {
-                            return null; // Return null if invalid characters are in the middle
-                        }
-
-                        // Remove invalid characters (#, &, ?) using regular expression
-                        infoObj.id = id.replace(/[#&?]/g, '');
-                    }
-
-                    return infoObj;
-                }
-            },
-            matchesModuleItem: function (moduleItem) {
-                let info = this.pageInfo.info;
-                if (!moduleItem || !info) {
-                    console.log(`error not match`)
-                    return false;
-                }
-
-                ////console.log(`wassa: ${info.type}`)
-                // 'File', 'Page', 'Discussion',
-                // 'Assignment', 'Quiz', 'SubHeader', 'ExternalUrl', 'ExternalTool'
-                if (this.urlTypes.some((item) => item === moduleItem.type)) {
-                    if (info.type == 'Module Item') {
-                        return moduleItem.id == info.id
-                    }
-                    if (info.type == 'Page') {
-                        return moduleItem.page_url == info.id
-                    }
-                    return moduleItem.content_id == info.id
-                }
-
-                return (false);
-            }
-        }
-    };
-
-    scaffoldClient.currentModuleHelper = function (modulesData) {
-        let canvasModuleUtils = scaffoldClient.canvasModuleUtils;
-        return {
-            getCurrentModule: function () {
-                //console.log("getCurrentModule()");
-                let modules = modulesData ? modulesData : scaffoldClient.courseData.modules;
-                return modules.reduce((acc, module, arr, index) => {
-                    let modItems = module.items;
-                    let isCurrentModule = this.getCurrModuleItem(modItems);
-                    if (!acc) {
-                        if (isCurrentModule) {
-                            return module;
-                        }
-                    } else {
-                        return acc;
-                    }
-                    return false;
-                }, 0);
-            },
-            getCurrModuleItem: function (modItems) {
-                ////console.log(`modItems: "${modItems}"`);
-                return modItems.reduce((acc, item, index, arr) => {
-                    if (!acc) {
-                        if (this.isCurrentPage(item)) {
-                            return item;
-                        }
-                    } else {
-                        return acc;
-                    }
-                    return false;
-                }, false);
-            },
-            isCurrentPage: function (item) {
-                let moduleUtils = canvasModuleUtils();
-                ////console.log(`moduleUtils: ${JSON.stringify(moduleUtils)}`);
-
-                moduleUtils.setUrl(window.location.href);
-
-                ////console.log(`moduleUtils2: ${JSON.stringify(moduleUtils)}`);
-
-                const matches = moduleUtils.matchesModuleItem(item);
-                return matches;
-            }
-        }
-    };
+    scaffoldClient.currentModuleHelper = currentModuleHelper;
 
     return scaffoldClient;
-
 }

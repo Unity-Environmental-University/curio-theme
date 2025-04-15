@@ -1,6 +1,13 @@
-jest.mock('../../src/toolbox/getModUrl.js');
-import {getModUrl} from "../../src/toolbox/getModUrl.js";
 import {renderHomeCardHtmlAsync} from "../../src/homeCards/renderHomeCardHtmlAsync.js";
+
+jest.mock('../../src/toolbox/getModUrl.js');
+jest.mock('../../src/toolbox/getModImgUrl.js');
+jest.mock('../../src/client/hooks/useDocInfo.js');
+
+import {useDocInfo} from "../../src/client/hooks/useDocInfo.js";
+import {getModUrl}   from "../../src/toolbox/getModUrl.js";
+import {getHometileImageForMod} from "../../src/homeCards/getHometileImageForMod.js";
+import {getModImgUrl} from "../../src/toolbox/getModImgUrl.js";
 
 describe('renderHomeCardHtmlAsync', () => {
     let scaffoldClient;
@@ -15,9 +22,13 @@ describe('renderHomeCardHtmlAsync', () => {
 
         scaffoldClient = {
             preloadPromises: [Promise.resolve()],
-            getOrigin: jest.fn(() => 'https://example.com/'),
-            getModImgURL: jest.fn(() => 'https://example.com/img/module1.jpg'),
         }
+
+
+        useDocInfo.mockReturnValue({
+            origin: 'https://example.com/',
+        })
+        getModImgUrl.mockReturnValue('https://example.com/img/module1.jpg');
 
         mod = {
             name, state, items: [
@@ -31,7 +42,7 @@ describe('renderHomeCardHtmlAsync', () => {
     })
 
     it('should generate the correct HTML structure for a module card with completed items', async () => {
-        const result = await renderHomeCardHtmlAsync(scaffoldClient, mod);
+        const result = await renderHomeCardHtmlAsync(mod);
         expect(result).toContain('<a class="cbt-module-card cbt-module-locked"');
         expect(result).toContain('title="Module 1: Introduction"');
         expect(result).not.toContain('href="https://example.com/module1"');
@@ -44,7 +55,7 @@ describe('renderHomeCardHtmlAsync', () => {
     it('should generate urls for nonlocked modules', async () => {
         getModUrl.mockImplementationOnce(() => 'https://example.com/module1');
 
-        const result = await renderHomeCardHtmlAsync(scaffoldClient, {
+        const result = await renderHomeCardHtmlAsync({
             state: "active", ...mod, items: [
                 {completion_requirement: {completed: true}, html_url: 'https://example.com/'},
             ]

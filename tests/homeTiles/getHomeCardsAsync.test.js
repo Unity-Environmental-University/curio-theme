@@ -1,4 +1,13 @@
-import { getHomeCardsAsync } from '../../src/homeCards/getHomeCardsAsync.js'; // Adjust the import path as necessary.
+import { getHomeCardsAsync } from '../../src/homeCards/getHomeCardsAsync.js';
+import {useDocInfo} from "../../src/client/hooks/useDocInfo.js";
+import {getModImgUrl} from "../../src/toolbox/getModImgUrl.js"; // Adjust the import path as necessary.
+jest.mock('../../src/toolbox/getModImgUrl.js', () => ({
+    getModImgUrl: jest.fn(),
+}));
+jest.mock('../../src/client/hooks/useDocInfo.js', () => ({
+    useDocInfo: jest.fn(),
+}))
+
 
 describe('getHomeCardsAsync', () => {
     let scaffoldClient;
@@ -10,6 +19,11 @@ describe('getHomeCardsAsync', () => {
         moduleCardsContainer.className = 'cbt-home-cards';
         document.body.appendChild(moduleCardsContainer);
 
+        useDocInfo.mockReturnValue({
+            origin: 'https://example/com/'
+        })
+        getModImgUrl.mockReturnValue('https://example.com/img/module1.jpg');
+
         // Create a mock of ScaffoldClient
         scaffoldClient = {
             courseData: {
@@ -18,8 +32,6 @@ describe('getHomeCardsAsync', () => {
                     {name: 'Module 2', items: [], state: 'active'},
                 ],
             },
-            getOrigin: jest.fn(() => 'https://example.com/'),
-            getModImgURL: jest.fn(() => 'https://example.com/img/module1.jpg'),
             preloadPromises: [Promise.resolve()],
         };
     });

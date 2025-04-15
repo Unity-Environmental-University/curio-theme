@@ -1,13 +1,13 @@
-import {getDiscussionAsync} from "./discussionUtils.js";
+import {getDiscussionAsync} from "../toolbox/discussionUtils.js";
+import {getCourseId} from "./hooks/useDocInfo.js";
+import {useCanvasModuleUtils} from "../toolbox/canvasModuleUtils.js";
 
-export const displayRubric = async function (
-    {
-        courseId,
-        type,
-        id,
-   }) {
+export const displayRubric = async function () {
+
+    const moduleUtils = useCanvasModuleUtils();
     let rubricBtns = document.querySelectorAll('.cbt-rubric-btn');
-
+    const courseId = getCourseId();
+    const {id, type} = moduleUtils.pageInfo.info;
     let cachedRubricUrl = '#';
     const getRubricUrl = async (rubricBtn) =>
     {

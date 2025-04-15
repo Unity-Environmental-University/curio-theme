@@ -1,13 +1,16 @@
-export const getModImgUrl = async function (
-    {
-        fetchstatus,
-        fetchjson,
-        getCourseID,
-        getOrigin,
-        getCsrfToken,
-    }, filename) {
-    return new Promise(function (i, e) {
-        fetch(origin + "/api/v1/courses/" + getCourseID() + "/files?per_page=10000&content_types[]=image&search_term=" + filename, {
+import {getCourseId} from "../client/hooks/useDocInfo.js";
+import {fetchStatus} from "../client/fetchStatus.js";
+import {getCsrfToken} from "./getCsrfToken.js";
+
+const DEFAULT_IMG_URL = 'https://i.stack.imgur.com/y9DpT.jpg';
+
+
+export const getModImgUrl = async function (filename) {
+
+    const origin = document.location.origin;
+    const courseId = getCourseId();
+    return new Promise(async function (i, e) {
+        fetch(origin + "/api/v1/courses/" + courseId + "/files?per_page=10000&content_types[]=image&search_term=" + filename, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -15,27 +18,27 @@ export const getModImgUrl = async function (
                 "X-CSRF-Token": getCsrfToken()
             }
         })
-            .then(fetchstatus)
-            .then(fetchjson)
+            .then(fetchStatus)
+            .then(res => res.json())
             .then(function (files) {
-                var module_img_url = 'https://i.stack.imgur.com/y9DpT.jpg'; //default image
+                var module_img_url = DEFAULT_IMG_URL;
                 for (let file of files) {
                     if (file.display_name === filename + ".png" || file.display_name === filename + ".jpg") {
-                        module_img_url = getOrigin() + "/courses/" +
-                            getCourseID() + "/files/" + file.id + "/preview";
+                        module_img_url = origin + "/courses/" +
+                            courseId + "/files/" + file.id + "/preview";
                         //img_id = file.id
                     }
                 }
                 i(module_img_url);
             }).catch(function (error) {
             console.log('getModImgURL request failed' + error);
-            e('https://i.stack.imgur.com/y9DpT.jpg');
+            e(DEFAULT_IMG_URL);
         });
     })
 
     function console2(message) {
         let console = document.getElementById("console2");
-        if (getCourseID() == "3829777") {
+        if ( courseId == "3829777") {
             if (!console) {
                 console = createConsole();
             }

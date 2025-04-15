@@ -1,13 +1,14 @@
 import {getModUrl} from "../toolbox/getModUrl.js";
-import {getImgUrlAsync} from "../toolbox/getImgUrlAsync.js";
+import {getHometileImageForMod} from "./getHometileImageForMod.js";
 
 
-export async function renderHomeCardHtmlAsync({getOrigin, getModImgURL}, mod) {
+export async function renderHomeCardHtmlAsync(mod) {
     const firstItem = mod.items.find(item => item.type !== "SubHeader");
     const name = mod.name ? mod.name : "";
 
-    const modUrl = getModUrl({getOrigin}, mod, firstItem);
-    const imgUrl = await getImgUrlAsync(getModImgURL, mod);
+    const modUrl = getModUrl(mod, firstItem);
+    const imgUrl = await getHometileImageForMod(mod);
+
 
     let completedItems = mod.items.filter(
         item => item.type !== "SubHeader" && item.hasOwnProperty("completion_requirement") && item.completion_requirement.completed === true

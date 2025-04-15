@@ -1,4 +1,6 @@
-export async function getImgUrlAsync(getModImgUrl, module) {
+import {getModImgUrl} from "../toolbox/getModImgUrl.js";
+
+export async function getHometileImageForMod(module) {
     try {
         return await getModImgUrl("hometile" + module.position);
     } catch (e) {
