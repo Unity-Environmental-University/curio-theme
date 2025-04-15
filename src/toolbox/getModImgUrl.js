@@ -1,11 +1,12 @@
 import {getCourseId} from "../client/hooks/useDocInfo.js";
 import {fetchStatus} from "../client/fetchStatus.js";
 import {getCsrfToken} from "./getCsrfToken.js";
+import {DEFAULT_HOME_TILE} from "../config.js";
 
-const DEFAULT_IMG_URL = 'https://i.stack.imgur.com/y9DpT.jpg';
+const DEFAULT_IMG_URL = DEFAULT_HOME_TILE;
 
 
-export const getModImgUrl = async function (filename) {
+export const getModImgUrl = async function (filename, defaultImgUrl = DEFAULT_IMG_URL) {
 
     const origin = document.location.origin;
     const courseId = getCourseId();
@@ -21,7 +22,7 @@ export const getModImgUrl = async function (filename) {
             .then(fetchStatus)
             .then(res => res.json())
             .then(function (files) {
-                var module_img_url = DEFAULT_IMG_URL;
+                var module_img_url = defaultImgUrl;
                 for (let file of files) {
                     if (file.display_name === filename + ".png" || file.display_name === filename + ".jpg") {
                         module_img_url = origin + "/courses/" +
@@ -32,7 +33,7 @@ export const getModImgUrl = async function (filename) {
                 i(module_img_url);
             }).catch(function (error) {
             console.log('getModImgURL request failed' + error);
-            e(DEFAULT_IMG_URL);
+            e(defaultImgUrl);
         });
     })
 

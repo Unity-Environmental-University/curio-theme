@@ -138,7 +138,7 @@ export const createScaffoldClient = function (scaffoldClient, $) {
     };
 
 
-    scaffoldClient.getModImgURL = (filename) => getModImgUrl(filename);
+    scaffoldClient.getModImgURL = getModImgUrl;
 
 
     scaffoldClient.getCourseID = function () {

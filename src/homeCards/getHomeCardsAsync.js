@@ -16,6 +16,7 @@
 
 import {renderHomeCardHtmlAsync} from "./renderHomeCardHtmlAsync.js";
 import {filterBadgeClaimModules, filterBadgeEarnModules, sliceModulesOut} from "../toolbox/sliceModulesOut.js";
+import {DEFAULT_BADGE_HOME_TILE, DEFAULT_HOME_TILE} from "../config.js";
 
 export const getHomeCardsAsync = async function ({preloadPromises}, modules) {
     if (typeof modules !== 'object' || modules.length === 0) {
@@ -46,9 +47,9 @@ export const getHomeCardsAsync = async function ({preloadPromises}, modules) {
             const weeklyMods = filterResults.remaining;
             const {claimMods, earnMods} = filterResults.removed;
 
-            const weeklyHtmlPromises = weeklyMods.map(mod => renderHomeCardHtmlAsync(mod));
-            const claimPromises = claimMods?.map(mod => renderHomeCardHtmlAsync(mod)) ?? [];
-            const earnPromises = earnMods?.map(mod => renderHomeCardHtmlAsync(mod)) ?? [];
+            const weeklyHtmlPromises = weeklyMods.map(mod => renderHomeCardHtmlAsync(mod, DEFAULT_HOME_TILE));
+            const claimPromises = claimMods?.map(mod => renderHomeCardHtmlAsync(mod, DEFAULT_BADGE_HOME_TILE)) ?? [];
+            const earnPromises = earnMods?.map(mod => renderHomeCardHtmlAsync(mod, DEFAULT_BADGE_HOME_TILE)) ?? [];
 
             const weeklyHtmls = (await Promise.all(weeklyHtmlPromises));
             const earnBadgeHtmls = (await Promise.all(earnPromises));

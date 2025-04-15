@@ -1,13 +1,14 @@
 import {getModUrl} from "../toolbox/getModUrl.js";
 import {getHometileImageForMod} from "./getHometileImageForMod.js";
+import {DEFAULT_HOME_TILE} from "../config.js";
 
 
-export async function renderHomeCardHtmlAsync(mod) {
+export async function renderHomeCardHtmlAsync(mod, defaultImage = DEFAULT_HOME_TILE) {
     const firstItem = mod.items.find(item => item.type !== "SubHeader");
     const name = mod.name ? mod.name : "";
 
     const modUrl = getModUrl(mod, firstItem);
-    const imgUrl = await getHometileImageForMod(mod);
+    const imgUrl = await getHometileImageForMod(mod, defaultImage);
 
 
     let completedItems = mod.items.filter(

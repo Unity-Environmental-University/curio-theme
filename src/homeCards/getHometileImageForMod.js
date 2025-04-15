@@ -1,10 +1,11 @@
 import {getModImgUrl} from "../toolbox/getModImgUrl.js";
+import {DEFAULT_HOME_TILE} from "../config.js";
 
-export async function getHometileImageForMod(module) {
+export async function getHometileImageForMod(module, defaultImgUrl = DEFAULT_HOME_TILE) {
     try {
-        return await getModImgUrl("hometile" + module.position);
+        return await getModImgUrl("hometile" + module.position, defaultImgUrl);
     } catch (e) {
         console.log("Cannot find the image" + e + "; stack: " + e.stack);
-        return 'https://i.stack.imgur.com/y9DpT.jpg';
+        return defaultImgUrl;
     }
 }
