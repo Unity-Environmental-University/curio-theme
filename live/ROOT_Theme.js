@@ -29,7 +29,6 @@ $(document).ready(function (classNames){
                     for (let el of els) {
                         if (el.href.includes(userID)) continue;
                         el.href += userID;
-                        console.log(el.href);
                     }
                 } else {
                     setTimeout(tryAddButton, 200);
@@ -40,12 +39,15 @@ $(document).ready(function (classNames){
     }
 
     let observer = new MutationObserver((mutations)=>{
+        mutations.filter((mutation) => {
+
+        })
         for (let mutation of mutations) {
             fixLinksInNodes(mutation.target, userID);
         }
     });
 
-    observer.observe(document.querySelector('body'), {
+    observer.observe(document.querySelector('#nav-tray-portal'), {
         characterData: true,
         childList: true,
         subtree: true,

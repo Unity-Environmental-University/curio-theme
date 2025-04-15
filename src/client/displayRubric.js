@@ -1,14 +1,17 @@
 import {getDiscussionAsync} from "../toolbox/discussionUtils.js";
-import {getCourseId} from "./hooks/useDocInfo.js";
+import {getCourseId, useDocInfo} from "./hooks/useDocInfo.js";
 import {useCanvasModuleUtils} from "../toolbox/canvasModuleUtils.js";
 
 export const displayRubric = async function () {
 
     const moduleUtils = useCanvasModuleUtils();
     let rubricBtns = document.querySelectorAll('.cbt-rubric-btn');
-    const courseId = getCourseId();
+    const {
+        courseId,
+        origin
+    } = useDocInfo();
     const {id, type} = moduleUtils.pageInfo.info;
-    let cachedRubricUrl = '#';
+    let cachedRubricUrl = undefined;
     const getRubricUrl = async (rubricBtn) =>
     {
         console.log()
@@ -17,21 +20,21 @@ export const displayRubric = async function () {
         if(href && href !== '#') {
             cachedRubricUrl = href.endsWith("/rubric") ? href : `${href}/rubric`;
             return cachedRubricUrl;
-        } //if its actually set to something, just add the /rubric onto the end if necessary and boot it;
+        } //if it's actually set to something, just add the /rubric onto the end if necessary and boot it;
         console.log("Cached Url");
         if(cachedRubricUrl) return cachedRubricUrl;
 
         if(type === 'Assignment') {
-            cachedRubricUrl = `/courses/${courseId}/assignments/${id}/rubric`;
+            cachedRubricUrl = `${origin}/courses/${courseId}/assignments/${id}/rubric`;
         }
 
         if(type === 'Discussion') {
-            const discussionData = await getDiscussionAsync(courseId, id);
+            const discussionData = await getDiscussionAsync(id, courseId);
             console.log(discussionData);
-            cachedRubricUrl = `/courses/${courseId}/assignments/${discussionData.assignment_id}/rubric`;
+            cachedRubricUrl = `${origin}/courses/${courseId}/assignments/${discussionData.assignment_id}/rubric`;
         }
 
-        return cachedRubricUrl;
+        return cachedRubricUrl ?? '#';
     }
 
     for (let rubricBtn of rubricBtns) {

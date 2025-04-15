@@ -8,6 +8,7 @@ import {canvasModuleUtils} from "../toolbox/canvasModuleUtils.js";
 import {currentModuleHelper} from "../toolbox/currentModuleHelper.js";
 import {getCourseId} from "./hooks/useDocInfo.js";
 import {accordionList} from "../components/accordionList.js";
+import {getCsrfToken} from "../toolbox/getCsrfToken.js";
 
 export const createScaffoldClient = function (scaffoldClient, $) {
     scaffoldClient.modules = [
@@ -829,14 +830,7 @@ export const createScaffoldClient = function (scaffoldClient, $) {
     };
 
 
-    scaffoldClient.displayRubric = () => {
-
-        const pageInfo = scaffoldClient.pageInfo;
-        displayRubric({
-            courseId: useCourseId,
-            ...pageInfo,
-        });
-    }
+    scaffoldClient.displayRubric = displayRubric,
 
 
     scaffoldClient.setPageAsAgreement = function () {
@@ -1052,7 +1046,7 @@ export const createScaffoldClient = function (scaffoldClient, $) {
                         credentials: 'include',
                         headers: {
                             "Accept": "application/json",
-                            "X-CSRF-Token": scaffoldClient.getCsrfToken()
+                            "X-CSRF-Token": getCsrfToken()
                         }
                     }
 
@@ -1548,7 +1542,7 @@ export const createScaffoldClient = function (scaffoldClient, $) {
                 credentials: 'include',
                 headers: {
                     "Accept": "application/json",
-                    "X-CSRF-Token": scaffoldClient.getCsrfToken()
+                    "X-CSRF-Token": getCsrfToken()
                 }
             };
 

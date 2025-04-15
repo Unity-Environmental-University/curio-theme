@@ -1988,7 +1988,7 @@ export const createScaffoldClientMobile = (scaffoldClient) => {
             let weeklyMaterialsList = getWeeklyMaterialsList(moduleItems);
 
             setWeeklyMaterialsList(weeklyMaterialsList);
-        };
+        }
 
         function setWeeklyMaterialsList(listHTML) {
             let components = document.querySelectorAll('.cbt-weekly-materials');
