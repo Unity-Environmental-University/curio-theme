@@ -922,7 +922,14 @@ export const createScaffoldClient = function (scaffoldClient, $) {
     };
 
 
-    scaffoldClient.displayRubric = displayRubric;
+    scaffoldClient.displayRubric = () => {
+
+        const pageInfo = scaffoldClient.pageInfo;
+        displayRubric({
+            courseId: scaffoldClient.getCourseID(),
+            ...pageInfo,
+        });
+    }
 
 
     scaffoldClient.setPageAsAgreement = function () {

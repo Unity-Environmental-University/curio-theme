@@ -1,23 +1,54 @@
-export const displayRubric = function () {
+import {getDiscussionAsync} from "./discussionUtils.js";
+
+export const displayRubric = async function (
+    {
+        courseId,
+        type,
+        id,
+   }) {
     let rubricBtns = document.querySelectorAll('.cbt-rubric-btn');
 
+    let cachedRubricUrl = '#';
+    const getRubricUrl = async (rubricBtn) =>
+    {
+        console.log()
+        let rubricAnchorEl = rubricBtn.querySelector('a');
+        let href = rubricAnchorEl.getAttribute('href');
+        if(href && href !== '#') {
+            cachedRubricUrl = href.endsWith("/rubric") ? href : `${href}/rubric`;
+            return cachedRubricUrl;
+        } //if its actually set to something, just add the /rubric onto the end if necessary and boot it;
+        console.log("Cached Url");
+        if(cachedRubricUrl) return cachedRubricUrl;
+
+        if(type === 'Assignment') {
+            cachedRubricUrl = `/courses/${courseId}/assignments/${id}/rubric`;
+        }
+
+        if(type === 'Discussion') {
+            const discussionData = await getDiscussionAsync(courseId, id);
+            console.log(discussionData);
+            cachedRubricUrl = `/courses/${courseId}/assignments/${discussionData.assignment_id}/rubric`;
+        }
+
+        return cachedRubricUrl;
+    }
+
     for (let rubricBtn of rubricBtns) {
-        let rubricUrl = rubricBtn.querySelector('a');
         //if(rubricUrl && rubricUrl.href && /.*\/assignments\/\d+\/rubric$/.test(rubricUrl.href)){// remove rubrics
-        let rubricText = rubricUrl.text ? rubricUrl.text : 'Show Rubric';
-        if (rubricUrl && rubricUrl.href && /.*\/assignments\/\d+(\/rubric)?\/?$/.test(rubricUrl.href)) {
-            rubricBtn.innerHTML = `<button class="btn" data-rubric-link="${rubricUrl.href}">${rubricText}</button>`;
-            rubricBtn.addEventListener("click", (e) => {
+        let rubricText = rubricBtn?.querySelector('a')?.text ?? 'Show Rubric';
+        const rubricUrl = await getRubricUrl(rubricBtn);
+        if (rubricUrl && /.*\/assignments\/\d+(\/rubric)?\/?$/.test(rubricUrl)) {
+            rubricBtn.innerHTML = `<button class="btn" data-rubric-link="${rubricUrl}">${rubricText}</button>`;
+            rubricBtn.addEventListener("click", async (e) => {
                 const rubricDiv = e.currentTarget;
                 let rubricBtn = e.currentTarget.querySelector('button');
                 let rubricContent = rubricDiv.querySelector('.cbt-rubric-content');
                 if (rubricDiv && !rubricContent) {
                     console.log(rubricDiv);
                     let rubricUrl = rubricBtn.getAttribute("data-rubric-link");
-                    rubricUrl = rubricUrl.endsWith("/rubric") ? rubricUrl : `${rubricUrl}/rubric`;//add rubric url "" /rubric, then add
-                    console.log(`rubricUrl: "${rubricUrl}"`)
                     try {
-                        var xhr = new XMLHttpRequest();
+                        let xhr = new XMLHttpRequest();
                         xhr.onload = function () {
                             var rubricDoc = new DOMParser().parseFromString(this.response, "text/html");
                             console.log(rubricDoc.getElementById('rubrics'));
@@ -33,7 +64,7 @@ export const displayRubric = function () {
                     }
                 } else {
                     if (e.target.getAttribute("data-rubric-link")) {
-                        if (rubricContent.style.display == "block") {
+                        if (rubricContent.style.display === "block") {
                             rubricContent.style.display = "none";
                             rubricContent.setAttribute('aria-hidden', 'true');
                         } else {
