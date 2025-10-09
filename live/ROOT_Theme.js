@@ -22,16 +22,13 @@ $(document).ready(function (classNames){
     let el = document.getElementById('global_nav_help_link');
     if(el) {
         el.addEventListener('click', () => {
-            console.log("Clicked");
             let tryAddButton;
             tryAddButton = () => {
-                console.log("Done Waiting");
                 let els = document.querySelectorAll('#nav-tray-portal [href*="tfaforms.net/"]');
                 if (els && els.length > 0) {
                     for (let el of els) {
                         if (el.href.includes(userID)) continue;
                         el.href += userID;
-                        console.log(el.href);
                     }
                 } else {
                     setTimeout(tryAddButton, 200);
@@ -42,13 +39,15 @@ $(document).ready(function (classNames){
     }
 
     let observer = new MutationObserver((mutations)=>{
+        mutations.filter((mutation) => {
+
+        })
         for (let mutation of mutations) {
             fixLinksInNodes(mutation.target, userID);
-            console.log(mutation.target);
         }
     });
 
-    observer.observe(document.querySelector('body'), {
+    observer.observe(document.querySelector('#nav-tray-portal'), {
         characterData: true,
         childList: true,
         subtree: true,
