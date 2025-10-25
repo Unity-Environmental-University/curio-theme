@@ -702,54 +702,55 @@ export const createScaffoldClient = function (scaffoldClient, $) {
 
             init: function () {
                 // check task status
-                markable_discussion.dataHandler.getData().then(function (e) {
-                        console.log("Data exists");
-                        markable_discussion.dataHandler.data = e;
-                        console.log(markable_discussion.dataHandler.data);
-                        if (scaffoldClient.courseData.currentItem && scaffoldClient.courseData.currentItem.hasOwnProperty("type") && scaffoldClient.courseData.currentItem.type === 'Discussion') { // they have to be a module item
-                            var discussionId = (Object.keys(scaffoldClient.courseData.currentModule).length > 0 ? scaffoldClient.courseData.currentItem.content_id : scaffoldClient.courseData.currentItem.id); // this is module item id
+                // markable_discussion.dataHandler.getData().then(function (e) {
+                //         console.log("Data exists");
+                //         markable_discussion.dataHandler.data = e;
+                //         console.log(markable_discussion.dataHandler.data);
+                //         if (scaffoldClient.courseData.currentItem && scaffoldClient.courseData.currentItem.hasOwnProperty("type") && scaffoldClient.courseData.currentItem.type === 'Discussion') { // they have to be a module item
+                //             var discussionId = (Object.keys(scaffoldClient.courseData.currentModule).length > 0 ? scaffoldClient.courseData.currentItem.content_id : scaffoldClient.courseData.currentItem.id); // this is module item id
 
-                            var taskDiscussionId = 'task-' + discussionId;
-                            var tasks = document.querySelectorAll('.cbt-manual-mark-btn');
-                            if (tasks && tasks.length == 2) {
+                //             var taskDiscussionId = 'task-' + discussionId;
+                //             var tasks = document.querySelectorAll('.cbt-manual-mark-btn');
+                //             if (tasks && tasks.length == 2) {
 
-                                setupDiscussionNoticeAsync(discussionId, scaffoldClient.getCourseID()).then();
-                                if (markable_discussion.dataHandler.data[taskDiscussionId]) {
-                                    var btns = markable_discussion.dataHandler.data[taskDiscussionId];
-                                    for (let i = 0; i < tasks.length; i++) {
-                                        /* Identify if the button is clicked or not */
-                                        let currentTaskId = taskDiscussionId + '-btn-' + i;
-                                        if (btns.indexOf(currentTaskId) > -1) {
-                                            tasks[i].innerHTML = '<button class="btn utc-mark-done" data-discussion-done-id="' + currentTaskId + '" ><i class="utc-icon-checkmark-circle"></i> <span class="mark-done-labels"><span class="visible">Done</span></span></button>';
-                                        } else {
-                                            tasks[i].innerHTML = '<button class="btn" data-discussion-done-id="' + currentTaskId + '" ><i class="utc-icon-empty"></i> <span class="mark-done-labels"><span class="visible">Mark as done.</span></span></button>';
-                                        }
-                                        tasks[i].querySelector('button').addEventListener("click", (e) => {
-                                            var currTaskID = e.currentTarget.getAttribute("data-discussion-done-id");
-                                            console.log(currTaskID);
-                                            markable_discussion.ui.updateTaskHTML(currTaskID, e.currentTarget);
-                                        })
-                                    }
-                                } else {
-                                    markable_discussion.dataHandler.data[taskDiscussionId] = [];
-                                    for (let i = 0; i < tasks.length; i++) {
-                                        /* Default status */
-                                        tasks[i].innerHTML = '<button class="btn" data-discussion-done-id="task-' + taskDiscussionId + '-btn-' + i + '" ><i class="utc-icon-empty"></i> <span class="mark-done-labels"><span class="visible">Mark as done.</span></span></button>';
-                                        tasks[i].querySelector('button').addEventListener("click", (e) => {
-                                            var currTaskID = e.currentTarget.getAttribute("data-discussion-done-id");
-                                            console.log(currTaskID);
-                                            markable_discussion.ui.updateTaskHTML(currTaskID, e.currentTarget);
-                                        })
-                                    }
-                                }
-                            }
-                        }
-                    },
+                //                 setupDiscussionNoticeAsync(discussionId, scaffoldClient.getCourseID()).then();
+                //                 if (markable_discussion.dataHandler.data[taskDiscussionId]) {
+                //                     var btns = markable_discussion.dataHandler.data[taskDiscussionId];
+                //                     for (let i = 0; i < tasks.length; i++) {
+                //                         /* Identify if the button is clicked or not */
+                //                         let currentTaskId = taskDiscussionId + '-btn-' + i;
+                //                         if (btns.indexOf(currentTaskId) > -1) {
+                //                             tasks[i].innerHTML = '<button class="btn utc-mark-done" data-discussion-done-id="' + currentTaskId + '" ><i class="utc-icon-checkmark-circle"></i> <span class="mark-done-labels"><span class="visible">Done</span></span></button>';
+                //                         } else {
+                //                             tasks[i].innerHTML = '<button class="btn" data-discussion-done-id="' + currentTaskId + '" ><i class="utc-icon-empty"></i> <span class="mark-done-labels"><span class="visible">Mark as done.</span></span></button>';
+                //                         }
+                //                         tasks[i].querySelector('button').addEventListener("click", (e) => {
+                //                             var currTaskID = e.currentTarget.getAttribute("data-discussion-done-id");
+                //                             console.log(currTaskID);
+                //                             markable_discussion.ui.updateTaskHTML(currTaskID, e.currentTarget);
+                //                         })
+                //                     }
+                //                 } else {
+                //                     markable_discussion.dataHandler.data[taskDiscussionId] = [];
+                //                     for (let i = 0; i < tasks.length; i++) {
+                //                         /* Default status */
+                //                         tasks[i].innerHTML = '<button class="btn" data-discussion-done-id="task-' + taskDiscussionId + '-btn-' + i + '" ><i class="utc-icon-empty"></i> <span class="mark-done-labels"><span class="visible">Mark as done.</span></span></button>';
+                //                         tasks[i].querySelector('button').addEventListener("click", (e) => {
+                //                             var currTaskID = e.currentTarget.getAttribute("data-discussion-done-id");
+                //                             console.log(currTaskID);
+                //                             markable_discussion.ui.updateTaskHTML(currTaskID, e.currentTarget);
+                //                         })
+                //                     }
+                //                 }
+                //             }
+                //         }
+                //     },
 
 
-                    function (e) {
+                //    function (e) {
                         console.log("No Data, create new data");
                         if (scaffoldClient.courseData.currentItem && scaffoldClient.courseData.currentItem.hasOwnProperty("type") && scaffoldClient.courseData.currentItem.type === 'Discussion') { // they have to be a module item
+                            console.log("inside the if of creating that new data");
                             let tasks = document.querySelectorAll('.cbt-manual-mark-btn');
                             var discussionId = Object.keys(scaffoldClient.courseData.currentModule).length > 0 ? scaffoldClient.courseData.currentItem.content_id : scaffoldClient.courseData.currentItem.id; // this is module item id
                             for (let i = 0; i < tasks.length; i++) {
@@ -763,16 +764,20 @@ export const createScaffoldClient = function (scaffoldClient, $) {
                             }
 
                             tasks = document.querySelectorAll('.cbt-manual-mark-btn');
-                            if (tasks && tasks.length == 2) {
+                            console.log("here is tasks", tasks);
+                            // TODO why the length of 2? discussion in question has 3, reason why its not getting it
+                            // if (tasks && tasks.length == 2) {
+                            if (tasks) {
+                                console.log("we are adding the discussion blurb");
                                 setupDiscussionNoticeAsync(discussionId, scaffoldClient.getCourseID()).then();
                             }
 
                         }
                     }
-                )
-            }
+            //    )
+          //  }
         }
-
+        console.log("initing discus")
         markable_discussion.init();
     };
 
