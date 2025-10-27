@@ -166,14 +166,20 @@ export const createScaffoldClient = function (scaffoldClient, $) {
 
     scaffoldClient.getPageTitle = function () {
 
-        if (scaffoldClient.options['pagetitle'] !== undefined) return scaffoldClient.options['pagetitle'];
+        if (scaffoldClient.options['pagetitle'] !== undefined){
+            console.log("we got page title from options", scaffoldClient.options['pagetitle'])
+            return scaffoldClient.options['pagetitle'];
+        }
         var pageTitle = "";
         //get page title
         if (document.getElementsByClassName("page-title") && document.getElementsByClassName("page-title").length > 0) {
+            console.log("option 1");
             pageTitle = document.getElementsByClassName("page-title")[0].innerHTML;
         } else if (document.querySelectorAll(".ellipsible") && document.querySelectorAll(".ellipsible").length > 2) {
-            pageTitle = document.querySelectorAll(".ellipsible")[document.querySelectorAll(".ellipsible").length - 1].innerText
+            console.log("option 2") // this seems to be the most common one
+            pageTitle = document.querySelectorAll(".ellipsible")[document.querySelectorAll(".ellipsible").length - 1].innerHTML // was innerText (collapses whitespace)
         } else if (document.title) {
+            console.log("option 3")
             pageTitle = document.title;
         }
 
@@ -434,6 +440,7 @@ export const createScaffoldClient = function (scaffoldClient, $) {
         return new Promise(function (userRes, userRej) {
             let url = `/api/v1/users/self`;
             if (typeof Bottleneck != 'undefined' && scaffoldClient.limiter && typeof scaffoldClient.fetchResult === 'function') {
+                console.log("we are using fetchResult outside of fetchResults"); // this doesn't happen
                 scaffoldClient.fetchResult(url, function (data) {
                     if (typeof data !== 'object' || data.length === 0) {
                         userRes(false);
@@ -765,9 +772,9 @@ export const createScaffoldClient = function (scaffoldClient, $) {
 
                             tasks = document.querySelectorAll('.cbt-manual-mark-btn');
                             console.log("here is tasks", tasks);
-                            // TODO why the length of 2? discussion in question has 3, reason why its not getting it
+                            // TODO why the length of 2? discussion in question has 3, reason why its not getting it - is it 2 due dates vs 3?
                             // if (tasks && tasks.length == 2) {
-                            if (tasks) {
+                            if (tasks && tasks.length >= 2) {
                                 console.log("we are adding the discussion blurb");
                                 setupDiscussionNoticeAsync(discussionId, scaffoldClient.getCourseID()).then();
                             }
