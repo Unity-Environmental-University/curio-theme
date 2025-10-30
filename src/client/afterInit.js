@@ -36,7 +36,7 @@ export const afterInit = (scaffoldClient) => {
                 scaffoldClient.courseData.currentModule = modules[0];
                 return Promise.resolve();
             } else {
-                scaffoldClient.courseData.currentItem = null; // TODO it can be set back to null?
+                scaffoldClient.courseData.currentItem = null;
                 let currentDiscussionUrl = "/api/v1/courses/" + scaffoldClient.getCourseID() + "/discussion_topics?per_page=100&i&search_term=" + scaffoldClient.getPageTitle();
                 scaffoldClient.preloadPromises.push(scaffoldClient.fetchResults(currentDiscussionUrl, scaffoldClient.courseData.saveCurrentItem));
 
@@ -45,7 +45,7 @@ export const afterInit = (scaffoldClient) => {
         },
         saveCurrentItem: function (data) {/* save current item information - mainly design for discussion*/
             if (typeof data !== 'object' || data.length === 0) {
-                return Promise.resolve(false);  // TODO if fetchResults above doesn't get anything, we just return - really need to inspect fetchResults
+                return Promise.resolve(false);
             }
             data[0]['type'] = 'Discussion';
             scaffoldClient.courseData.currentItem = data[0];
@@ -123,7 +123,6 @@ export const afterInit = (scaffoldClient) => {
 
             // Get current module id
             let currentModuleUrl = "/api/v1/courses/" + scaffoldClient.getCourseID() + "/modules?per_page=100&include[]=items&search_term=" + scaffoldClient.getPageTitle();
-            // TODO getPageTitle isn't including the double space
             scaffoldClient.preloadPromises.push(scaffoldClient.fetchResults(currentModuleUrl, scaffoldClient.courseData.saveCurrentModule));
 
             // get all modules and module items information
@@ -202,16 +201,13 @@ export const afterInit = (scaffoldClient) => {
             if (typeof json === 'object') {
                 return typeof callback === 'function' ? callback(json, links) : Promise.resolve(json);
             } else {
-                console.log('json was not of type object, promise resolving false');
                 return Promise.resolve(false);
             }
         }).then(function () {
             const additionalLinks = scaffoldClient.nextPage(links);
             if (additionalLinks !== false && additionalLinks.length > 0) {
-                console.log('additional links to fetch, attempting');
                 return scaffoldClient.fetchResults(additionalLinks, callback);
             } else {
-                console.log('no additional links, promise resolving true');
                 return Promise.resolve(true);
             }
         }).catch(function (e) {

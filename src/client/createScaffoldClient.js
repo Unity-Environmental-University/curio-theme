@@ -436,7 +436,6 @@ export const createScaffoldClient = function (scaffoldClient, $) {
         return new Promise(function (userRes, userRej) {
             let url = `/api/v1/users/self`;
             if (typeof Bottleneck != 'undefined' && scaffoldClient.limiter && typeof scaffoldClient.fetchResult === 'function') {
-                console.log("we are using fetchResult outside of fetchResults"); // this doesn't happen
                 scaffoldClient.fetchResult(url, function (data) {
                     if (typeof data !== 'object' || data.length === 0) {
                         userRes(false);
