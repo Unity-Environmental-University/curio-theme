@@ -167,19 +167,15 @@ export const createScaffoldClient = function (scaffoldClient, $) {
     scaffoldClient.getPageTitle = function () {
 
         if (scaffoldClient.options['pagetitle'] !== undefined){
-            console.log("we got page title from options", scaffoldClient.options['pagetitle'])
             return scaffoldClient.options['pagetitle'];
         }
         var pageTitle = "";
         //get page title
         if (document.getElementsByClassName("page-title") && document.getElementsByClassName("page-title").length > 0) {
-            console.log("option 1");
             pageTitle = document.getElementsByClassName("page-title")[0].innerHTML;
         } else if (document.querySelectorAll(".ellipsible") && document.querySelectorAll(".ellipsible").length > 2) {
-            console.log("option 2") // this seems to be the most common one
-            pageTitle = document.querySelectorAll(".ellipsible")[document.querySelectorAll(".ellipsible").length - 1].innerHTML // was innerText (collapses whitespace)
+            pageTitle = document.querySelectorAll(".ellipsible")[document.querySelectorAll(".ellipsible").length - 1].innerHTML
         } else if (document.title) {
-            console.log("option 3")
             pageTitle = document.title;
         }
 
@@ -718,7 +714,7 @@ export const createScaffoldClient = function (scaffoldClient, $) {
 
                             var taskDiscussionId = 'task-' + discussionId;
                             var tasks = document.querySelectorAll('.cbt-manual-mark-btn');
-                            if (tasks && tasks.length == 2) {
+                            if (tasks && tasks.length >= 2) {
 
                                 setupDiscussionNoticeAsync(discussionId, scaffoldClient.getCourseID()).then();
                                 if (markable_discussion.dataHandler.data[taskDiscussionId]) {
@@ -756,10 +752,9 @@ export const createScaffoldClient = function (scaffoldClient, $) {
 
                     function (e) {
                         console.log("No Data, create new data");
-                        if (scaffoldClient.courseData.currentItem && scaffoldClient.courseData.currentItem.hasOwnProperty("type") && scaffoldClient.courseData.currentItem.type === 'Discussion') { // they have to be a module item
-                            console.log("inside the if of creating that new data");
+                        if (scaffoldClient.courseData.currentItem && scaffoldClient.courseData.currentItem.hasOwnProperty("type") && scaffoldClient.courseData.currentItem.type === 'Discussion') {
                             let tasks = document.querySelectorAll('.cbt-manual-mark-btn');
-                            var discussionId = Object.keys(scaffoldClient.courseData.currentModule).length > 0 ? scaffoldClient.courseData.currentItem.content_id : scaffoldClient.courseData.currentItem.id; // this is module item id
+                            var discussionId = Object.keys(scaffoldClient.courseData.currentModule).length > 0 ? scaffoldClient.courseData.currentItem.content_id : scaffoldClient.courseData.currentItem.id;
                             for (let i = 0; i < tasks.length; i++) {
                                 /* Default status */
                                 tasks[i].innerHTML = '<button class="btn" data-discussion-done-id="task-' + discussionId + '-btn-' + i + '" ><i class="utc-icon-empty"></i> <span class="mark-done-labels"><span class="visible">Mark as done.</span></span></button>';
@@ -771,11 +766,7 @@ export const createScaffoldClient = function (scaffoldClient, $) {
                             }
 
                             tasks = document.querySelectorAll('.cbt-manual-mark-btn');
-                            console.log("here is tasks", tasks);
-                            // TODO why the length of 2? discussion in question has 3, reason why its not getting it - is it 2 due dates vs 3?
-                            // if (tasks && tasks.length == 2) {
-                            if (tasks && tasks.length >= 2) {
-                                console.log("we are adding the discussion blurb");
+                            if (tasks && tasks.length >= 2) {   // tasks == "mark as done" on page
                                 setupDiscussionNoticeAsync(discussionId, scaffoldClient.getCourseID()).then();
                             }
 
@@ -784,7 +775,6 @@ export const createScaffoldClient = function (scaffoldClient, $) {
                 )
             }
         }
-        console.log("initing discus")
         markable_discussion.init();
     };
 

@@ -19,32 +19,24 @@ export const afterInit = (scaffoldClient) => {
             return Promise.resolve();
         },
         saveCurrentModule: function (data) {/* save the module information for current page */
-            console.log(`entering save current module, item is ${scaffoldClient.courseData.currentItem}`);
-            console.log("data detail", data)
-            if (typeof data !== 'object' || data.length === 0) {    // normal discussions dont enter here TODO
-                console.log(`we in heres data type: ${typeof data} and length: ${data.length}`);
+            if (typeof data !== 'object' || data.length === 0) {
                 let currentDiscussionUrl = "/api/v1/courses/" + scaffoldClient.getCourseID() + "/discussion_topics?per_page=100&i&search_term=" + scaffoldClient.getPageTitle();
-                console.log("current discussion url is", currentDiscussionUrl)
-                scaffoldClient.preloadPromises.push(scaffoldClient.fetchResults(currentDiscussionUrl, scaffoldClient.courseData.saveCurrentItem));// TODO this must be where the 2nd one comes from which is even worse?
+                scaffoldClient.preloadPromises.push(scaffoldClient.fetchResults(currentDiscussionUrl, scaffoldClient.courseData.saveCurrentItem));
                 return Promise.resolve(false);
             }
             var modules = [];
-            for (let module of data) { //TODO add console logs to figure out whats going on
-                console.log(`Heres module: ${module}`); // TODO normal discussions have data and save their currentItem here
+            for (let module of data) { 
                 if (Array.from(module.items).find(item => item.title.trim() === scaffoldClient.getPageTitle().trim())) {
                     scaffoldClient.courseData.currentItem = Array.from(module.items).find(item => item.title.trim() === scaffoldClient.getPageTitle().trim());
-                    console.log('current item is,', scaffoldClient.courseData.currentItem, 'inside start of savecurrentmodule');
                     modules.push(module);
                 }
             }
-            console.log(`modules length is ${modules.length}`)
             /* It is possible the user insert same page in two different modules. We only handle the first one. */
             if (modules.length > 0) {
                 scaffoldClient.courseData.currentModule = modules[0];
                 return Promise.resolve();
             } else {
                 scaffoldClient.courseData.currentItem = null; // TODO it can be set back to null?
-                console.log(`current item is ${scaffoldClient.courseData.currentItem} inside else in savecurrentmodule`);
                 let currentDiscussionUrl = "/api/v1/courses/" + scaffoldClient.getCourseID() + "/discussion_topics?per_page=100&i&search_term=" + scaffoldClient.getPageTitle();
                 scaffoldClient.preloadPromises.push(scaffoldClient.fetchResults(currentDiscussionUrl, scaffoldClient.courseData.saveCurrentItem));
 
@@ -52,13 +44,11 @@ export const afterInit = (scaffoldClient) => {
             }
         },
         saveCurrentItem: function (data) {/* save current item information - mainly design for discussion*/
-            console.log("save current item got data:", data)
             if (typeof data !== 'object' || data.length === 0) {
                 return Promise.resolve(false);  // TODO if fetchResults above doesn't get anything, we just return - really need to inspect fetchResults
             }
             data[0]['type'] = 'Discussion';
             scaffoldClient.courseData.currentItem = data[0];
-            console.log(`current item is ${scaffoldClient.courseData.currentItem} inside savecurrentitems`)
             return Promise.resolve();
         },
         saveMarkableDiscussions: function (discussions) {
@@ -176,8 +166,6 @@ export const afterInit = (scaffoldClient) => {
     }
 
     scaffoldClient.fetchResult = function (url, callback) {
-        console.log('DEBUG entering fetchResult, heres url:', url);
-        console.log('DEBUG and heres callback:', callback.name);
         let links;
         return scaffoldClient.limiter.schedule(function () {
             const options = {
@@ -192,7 +180,6 @@ export const afterInit = (scaffoldClient) => {
         }).then(function (res) {
             if (res.ok) {
                 links = res.headers.get('link') ? scaffoldClient.extractLinks(res.headers.get('link')) : null;
-                console.log('DEBUG successful api response,');
                 return res.json();
             } else if (res.status === 403) {
                 if (typeof scaffoldClient.failedFetches[res.url] !== 'undefined') {
@@ -213,8 +200,6 @@ export const afterInit = (scaffoldClient) => {
             }
         }).then(function (json) {
             if (typeof json === 'object') {
-                console.log('passing json object to callback func now');
-                console.log('here is the json', json, ' a result of querying', url); // TODO find out why url is wrong, what called fetchResult and passed the url
                 return typeof callback === 'function' ? callback(json, links) : Promise.resolve(json);
             } else {
                 console.log('json was not of type object, promise resolving false');

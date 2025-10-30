@@ -50,9 +50,7 @@ export const createApiFunctions = function (scaffoldClient) {
             }
 
             if (document.querySelector('.cbt-banner-announcements--container')) {
-                console.log("wtf is going on?")
                 setAnnouncementsButton();
-                console.log("is this going on?")
             }
 
             if (document.querySelector(".cbt-carousel")) {
@@ -62,8 +60,7 @@ export const createApiFunctions = function (scaffoldClient) {
             courseData.modules = await getModItemsProgress(courseData.markableDiscussions);
             if (document.getElementById('cbt-learner')) {
                 getUserName().then(function (user) {
-                    if (user) { // user is null? is user not falsy?
-                        console.log(`Here is user ${user}`)
+                    if (user) {
                         if (user.hasOwnProperty("first_name")) {
                             document.getElementById("cbt-learner").innerHTML = 'Welcome ' + user.first_name + ',';
                         } else if (user.hasOwnProperty("short_name")) {
@@ -96,14 +93,7 @@ export const createApiFunctions = function (scaffoldClient) {
                 getTopicOverview();
             }
 
-            console.log(`Current item: ${courseData.currentItem}`, // seems like currentItem is null for this discus, invalidating all methods
-                        )
-            if (courseData.currentItem){
-                console.log(`has property of type: ${courseData.currentItem.hasOwnProperty('type')}`)
-                console.log(`current item type: ${courseData.currentItem.type}`)
-            }
             if (courseData.currentItem && courseData.currentItem.hasOwnProperty('type') && courseData.currentItem.type === 'Discussion') {
-                console.log("mysertyyy") // TODO invesitgate - AHA the discussion in question is not entering this
                 initMarkableDiscussion();
                 //I don't know why this is here but it's likely outdated and eating Introduction headers.
                 // if (document.querySelector('#cbt-banner-header') && document.querySelector('.discussion-redesign-layout h2')) {
