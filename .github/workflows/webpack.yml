@@ -17,58 +17,50 @@ jobs:
           fetch-depth: 0 
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Bump and Sync Theme Version
+      - name: Bump and Commit Package Version
         run: |
-          # Check for mandatory files before proceeding
+          # 1. Configuration Check
           if [ ! -f "package.json" ]; then
-            echo "Error: package.json not found in the repository root."
-            exit 1
-          fi
-          if [ ! -f "style.css" ]; then
-            echo "Error: style.css not found in the repository root."
+            echo "Error: package.json not found in the repository root. Cannot proceed with version bump."
             exit 1
           fi
 
-          # Configure Git user for the automated commit
+          # Configure Git user
           git config user.name "GitHub Actions Bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # 1. READ current version from package.json using jq
-          # Use a default version (0.9) if the field is not found, though ideally it should always be present.
-          CURRENT_VERSION=$(jq -r '.version // "0.9"' package.json)
+          # 2. READ current version from package.json using jq
+          # Use a default (0.0) if the field is missing/invalid to avoid the 'null' error
+          CURRENT_VERSION=$(jq -r '.version // "0.0"' package.json)
           echo "Current Version read: $CURRENT_VERSION"
           
-          # 2. SPLIT the version into Major and Minor parts
+          # 3. SPLIT and VALIDATE version format
           MAJOR_VERSION=$(echo $CURRENT_VERSION | cut -d'.' -f1)
           MINOR_VERSION=$(echo $CURRENT_VERSION | cut -d'.' -f2)
           
-          # 3. Handle bad version format gracefully
           if ! [[ "$MAJOR_VERSION" =~ ^[0-9]+$ && "$MINOR_VERSION" =~ ^[0-9]+$ ]]; then
-            echo "Error: Invalid version format in package.json ($CURRENT_VERSION). Must be X.Y (e.g., 1.0)."
+            echo "Error: Invalid version format in package.json ($CURRENT_VERSION). Please use X.Y (e.g., 1.0)."
             exit 1
           fi
           
-          # 4. CALCULATE the new version
+          # 4. CALCULATE the new version (X.9 -> (X+1).0)
           NEW_MINOR=$((MINOR_VERSION + 1))
           NEW_MAJOR=$MAJOR_VERSION
           
-          # 5. HANDLE the rollover logic
           if [ $MINOR_VERSION -eq 9 ]; then
             NEW_MAJOR=$((MAJOR_VERSION + 1))
             NEW_MINOR=0
           fi
           
-          # 6. CONSTRUCT the new version string
           NEW_VERSION="$NEW_MAJOR.$NEW_MINOR"
           echo "New Version calculated: $NEW_VERSION"
           
-          # 7. WRITE and SYNC
+          # 5. WRITE, COMMIT, and PUSH
           jq '.version = "'$NEW_VERSION'"' package.json > tmp.json && mv tmp.json package.json
-          sed -i '/^Version:/s/Version:.*/Version: '$NEW_VERSION'/' style.css
           
-          # 8. COMMIT and PUSH
-          git add package.json style.css
+          git add package.json
           git commit -m "chore: [automated] Bump theme version to $NEW_VERSION" || true
+          
           git push
 
   build:
