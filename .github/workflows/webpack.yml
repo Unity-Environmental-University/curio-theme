@@ -17,6 +17,19 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Get version from package.json
+      id: package.json
+      uses: actions/github-script@v7
+      with: 
+        script: |
+         const packageJson = require('./package.json');
+         core.setOutput('version', packageJson.version);
+
+    - name: Use the version number
+      run: |
+        THEME_VERSION="${{ steps.package.outputs.version }}"
+        echo "The version is: $THEME_VERSION"
+
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
@@ -26,3 +39,9 @@ jobs:
       run: |
         npm install
         npx webpack
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: unity_canvas_theme_${{ theme. }}
+        path: build/
