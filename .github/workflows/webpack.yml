@@ -43,5 +43,5 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: unity_canvas_theme_${{ THEME_VERSION }}
+        name: unity_canvas_theme_${{ env.THEME_VERSION }}
         path: build/
