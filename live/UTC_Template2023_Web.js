@@ -437,7 +437,7 @@ var ScaffoldClient = (function (m, $) {
                         ScaffoldClient.findNavItems().then(function (navItem) {
                             let navHTML = ScaffoldClient.getNavHTML(navItem);
                             if ($(".module-sequence-footer").length > 0) {
-                                $(".module-sequence-footer").parent().append(navHTML);
+                                //$(".module-sequence-footer").parent().append(navHTML);
                                 $(".module-sequence-footer").hide();
                             }
                         });

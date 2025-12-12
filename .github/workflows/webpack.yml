@@ -7,22 +7,95 @@ on:
     branches: [ "stable" ]
 
 jobs:
-  build:
+  version:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump and Commit Package Version
+        run: |
+          # 1. Configuration Check
+          if [ ! -f "package.json" ]; then
+            echo "Error: package.json not found in the repository root. Cannot proceed with version bump."
+            exit 1
+          fi
+
+          # Configure Git user
+          git config user.name "GitHub Actions Bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # 2. READ current version from package.json using jq
+          # Use a default (0.0) if the field is missing/invalid to avoid the 'null' error
+          CURRENT_VERSION=$(jq -r '.version // "0.0"' package.json)
+          echo "Current Version read: $CURRENT_VERSION"
+          
+          # 3. SPLIT and VALIDATE version format
+          MAJOR_VERSION=$(echo $CURRENT_VERSION | cut -d'.' -f1)
+          MINOR_VERSION=$(echo $CURRENT_VERSION | cut -d'.' -f2)
+          
+          if ! [[ "$MAJOR_VERSION" =~ ^[0-9]+$ && "$MINOR_VERSION" =~ ^[0-9]+$ ]]; then
+            echo "Error: Invalid version format in package.json ($CURRENT_VERSION). Please use X.Y (e.g., 1.0)."
+            exit 1
+          fi
+          
+          # 4. CALCULATE the new version (X.9 -> (X+1).0)
+          NEW_MINOR=$((MINOR_VERSION + 1))
+          NEW_MAJOR=$MAJOR_VERSION
+          
+          if [ $MINOR_VERSION -eq 9 ]; then
+            NEW_MAJOR=$((MAJOR_VERSION + 1))
+            NEW_MINOR=0
+          fi
+          
+          NEW_VERSION="$NEW_MAJOR.$NEW_MINOR"
+          echo "New Version calculated: $NEW_VERSION"
+          
+          # 5. WRITE, COMMIT, and PUSH
+          jq '.version = "'$NEW_VERSION'"' package.json > tmp.json && mv tmp.json package.json
+          
+          git add package.json
+          git commit -m "chore: [automated] Bump theme version to $NEW_VERSION" || true
+          
+          git push
+
+  build:
+    runs-on: ubuntu-latest
+    needs: version
+    
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout Updated Code
+        uses: actions/checkout@v4
+        
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: Build
+        run: |
+          npm install
+          npx webpack
 
-    - name: Build
-      run: |
-        npm install
-        npx webpack
+      - name: Set Artifact Name (Using jq for current version)
+        id: set_version_env
+        run: |
+          VERSION=$(jq -r '.version' package.json)
+          echo "THEME_VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Upload production artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity_canvas_theme_${{ matrix.node-version }}_${{ env.THEME_VERSION }}
+          path: build/
