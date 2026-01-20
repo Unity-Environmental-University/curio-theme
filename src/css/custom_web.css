@@ -1060,6 +1060,10 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 1.5rem
 }
 
+.cbt-callout-box * {
+    min-width: 0;   
+}
+
 :root {
     --cbt-banner-font-color: #fff;
     --cbt-banner-font-family: sans-serif;
