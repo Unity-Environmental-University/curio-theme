@@ -1,4 +1,4 @@
-import {DiscussionNotice} from "../components/DiscussionNotice.js";
+import {DiscussionNotice, AIDiscussionNotice} from "../components/DiscussionNotice.js";
 
 /**
  * @type {import('../client/types.js').IDiscussionUtilsScaffoldClientView}
@@ -32,13 +32,19 @@ export const getDiscussionAsync = async (discussionId, courseId, noCached = fals
 
 export const setupDiscussionNoticeAsync = async (id, courseId) => {
     let data = await getDiscussionAsync(id,  courseId);
-    if (!data?.require_initial_post) return;
 
     let banner = document.querySelector('.scaffold-media-box.cbt-banner.cbt-image-banner');
+
     if (banner) {
         const boilerplate = document.createElement('div');
         banner.after(boilerplate);
-        boilerplate.outerHTML = DiscussionNotice();
+
+        if (!data?.require_initial_post) { // show AI notice only if no initial post required to view
+            boilerplate.outerHTML = AIDiscussionNotice;
+        }
+        else{ 
+            boilerplate.outerHTML = DiscussionNotice;
+        }
     }
 
 }

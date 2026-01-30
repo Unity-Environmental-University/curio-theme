@@ -713,8 +713,7 @@ export const createScaffoldClient = function (scaffoldClient, $) {
 
                             var taskDiscussionId = 'task-' + discussionId;
                             var tasks = document.querySelectorAll('.cbt-manual-mark-btn');
-                            if (tasks && tasks.length >= 2) {
-
+                            if (tasks) {
                                 setupDiscussionNoticeAsync(discussionId, scaffoldClient.getCourseID()).then();
                                 if (markable_discussion.dataHandler.data[taskDiscussionId]) {
                                     var btns = markable_discussion.dataHandler.data[taskDiscussionId];
@@ -765,7 +764,8 @@ export const createScaffoldClient = function (scaffoldClient, $) {
                             }
 
                             tasks = document.querySelectorAll('.cbt-manual-mark-btn');
-                            if (tasks && tasks.length >= 2) {   // tasks == "mark as done" on page
+                            if (tasks) {   // tasks == "mark as done" on page
+                                console.log("mvirgin setupDiscussionNoticeAsync called");
                                 setupDiscussionNoticeAsync(discussionId, scaffoldClient.getCourseID()).then();
                             }
 
