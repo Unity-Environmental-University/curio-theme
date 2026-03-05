@@ -983,7 +983,13 @@ h1, h2, h3, h4, h5, h6 {
     border-bottom: var(--calloutbox-border-bottom);
     border-left: var(--calloutbox-border-left);
     border-right: var(--calloutbox-border-right);
-    box-shadow: var(--calloutbox-box-shadow)
+    box-shadow: var(--calloutbox-box-shadow);
+    display: flex;
+    width: 100%;
+}
+
+.cbt-callout-box .content {
+    width: 100%;
 }
 
 .cbt-callout-box .cbt-callout-box-header {
@@ -3105,12 +3111,8 @@ ul.cbt-tab-trigger-list li.active::after {
     max-width: var(--cbt-video-maxwidth);
     display: block;
     margin: var(--cbt-video-margin);
-    height: 0;
-    top: 0;
-    bottom: 0;
     position: relative;
-    padding-bottom: var(--cbt-video-padding-bottom);
-    padding-top: var(--cbt-video-padding-top)
+    aspect-ratio: 16 / 9;
 }
 
 .cbt-video-container iframe, #tinymce .cbt-video-container span {
