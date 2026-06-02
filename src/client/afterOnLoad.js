@@ -1,3 +1,5 @@
+import {hydrateSyllabus} from "../toolbox/hydrateSyllabus.js";
+
 export const afterOnLoad = (scaffoldClient) => {
     /* Import Style and Script */
     let head = document.getElementsByTagName("head")[0];
@@ -34,5 +36,9 @@ export const afterOnLoad = (scaffoldClient) => {
         }, 10000);
     } else {
         scaffoldClient.interactiveSetup();
+    }
+
+    if (window.location.pathname.toLowerCase().includes("/syllabus")) {
+        hydrateSyllabus();
     }
 };

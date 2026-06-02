@@ -1,7 +1,7 @@
 // webpack.config.js
-import path from 'path';
-import { fileURLToPath } from 'url';
-import NodePolyfillPlugin from 'node-polyfill-webpack-plugin';
+import path from "path";
+import { fileURLToPath } from "url";
+import NodePolyfillPlugin from "node-polyfill-webpack-plugin";
 import TerserPlugin from "terser-webpack-plugin";
 
 // Emulate CommonJS __dirname
@@ -10,8 +10,8 @@ const __dirname = path.dirname(__filename);
 
 const common = {
   entry: {
-    web: './src/mainThemeWeb.js',       // Entry point for the web file
-    mobile: './src/mainThemeMobile.js',   // Entry point for the mobile file
+    web: "./src/mainThemeWeb.js", // Entry point for the web file
+    mobile: "./src/mainThemeMobile.js", // Entry point for the mobile file
   },
   module: {
     rules: [
@@ -19,9 +19,9 @@ const common = {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,
         use: {
-          loader: 'babel-loader',
+          loader: "babel-loader",
           options: {
-            presets: ['@babel/preset-env','@babel/preset-react'],
+            presets: ["@babel/preset-env", "@babel/preset-react"],
           },
         },
       },
@@ -29,48 +29,47 @@ const common = {
   },
   resolve: {
     fallback: {
-      path: 'path-browserify',
+      path: "path-browserify",
       fs: false,
     },
   },
-  plugins: [
-    new NodePolyfillPlugin(),
-  ],
+  plugins: [new NodePolyfillPlugin()],
   externals: {
-    react: 'React',
-    'react-dom': 'ReactDOM',
+    react: "React",
+    "react-dom": "ReactDOM",
   },
 };
 
 const devConfig = {
   ...common,
-  mode: 'development',
+  mode: "development",
   optimization: {
     minimize: false,
     concatenateModules: true,
   },
-  devtool: 'eval-source-map',
+  devtool: "eval-source-map",
   output: {
-    path: path.resolve(__dirname, 'build'),
-    filename: 'ueu_canvas_theme_[name].js',
+    path: path.resolve(__dirname, "build"),
+    filename: "ueu_canvas_theme_[name].js",
   },
 };
 
 const prodConfig = {
   ...common,
-  mode: 'production',
+  mode: "production",
   optimization: {
     minimize: true,
     concatenateModules: true,
-    minimizer: [new TerserPlugin({
-      extractComments: false,
-    })],
-
+    minimizer: [
+      new TerserPlugin({
+        extractComments: false,
+      }),
+    ],
   },
   output: {
-    path: path.resolve(__dirname, 'build'),
-    filename: 'ueu_canvas_theme_[name].min.js',
+    path: path.resolve(__dirname, "build"),
+    filename: "ueu_canvas_theme_[name].min.js",
   },
 };
 
-export default [ devConfig, prodConfig ];
+export default [devConfig, prodConfig];
