@@ -17,12 +17,23 @@ export const hydrateSyllabus = () => {
   const KEEP_TAGS = new Set(["I", "EM", "B", "STRONG", "A", "SPAN"]);
   const SAFE_HREF = /^(https?:\/\/|mailto:)/i;
 
+  // Canvas decorates external links on the page (including the ones in the
+  // hidden table) with a screen-reader note ("Links to an external site.") and
+  // an icon. Copying those would show the note as ordinary text, so they are
+  // left behind; Canvas decorates the copied link on its own.
+  const isCanvasLinkDecoration = (el) =>
+    el.tagName === "SVG" ||
+    el.classList.contains("screenreader-only") ||
+    el.classList.contains("external_link_icon") ||
+    el.classList.contains("ui-icon");
+
   // Copy a cell node into `parent`, keeping only links/emphasis. Anything else
   // contributes its text only.
   function appendSafe(node, parent) {
     if (node.nodeType === Node.TEXT_NODE) {
       parent.appendChild(document.createTextNode(node.textContent));
     } else if (node.nodeType === Node.ELEMENT_NODE) {
+      if (isCanvasLinkDecoration(node)) return;
       const ok =
         KEEP_TAGS.has(node.tagName) &&
         (node.tagName !== "A" || SAFE_HREF.test(node.getAttribute("href") || ""));
@@ -43,9 +54,15 @@ export const hydrateSyllabus = () => {
   function splitRichCell(cell) {
     const safe = document.createElement("div");
     cell.childNodes.forEach((child) => appendSafe(child, safe));
+    // A link with no text (left over from pasting) would show only Canvas's external-link note.
+    safe.querySelectorAll("a").forEach((a) => {
+      if (!a.textContent.trim()) a.remove();
+    });
 
     const items = [];
-    const startItem = (ancestors) => {
+    // `level` is the nesting depth: "|" starts a top-level item (0), "||" one
+    // level in (1), "|||" two levels in, and so on.
+    const startItem = (ancestors, level = 0) => {
       const root = document.createElement("div");
       let cur = root;
       ancestors.forEach((a) => {
@@ -53,15 +70,16 @@ export const hydrateSyllabus = () => {
         cur.appendChild(copy);
         cur = copy;
       });
-      items.push({ root, cur });
+      items.push({ root, cur, level });
     };
     const last = () => items[items.length - 1];
 
     const walk = (node, ancestors) => {
       if (node.nodeType === Node.TEXT_NODE) {
-        node.textContent.split("|").forEach((part, i) => {
-          if (i > 0) startItem(ancestors);
-          if (part) last().cur.appendChild(document.createTextNode(part));
+        // Odd entries are runs of "|"; the run length sets the next item's level.
+        node.textContent.split(/(\|+)/).forEach((part, i) => {
+          if (i % 2 === 1) startItem(ancestors, part.length - 1);
+          else if (part) last().cur.appendChild(document.createTextNode(part));
         });
       } else if (!node.textContent.includes("|")) {
         last().cur.appendChild(node.cloneNode(true));
@@ -79,7 +97,7 @@ export const hydrateSyllabus = () => {
     safe.childNodes.forEach((child) => walk(child, []));
 
     return items
-      .map(({ root }) => {
+      .map(({ root, level }) => {
         // Trim whitespace at both edges, even when it sits inside a link or <i>.
         const edge = (side) => {
           let n = root;
@@ -90,9 +108,32 @@ export const hydrateSyllabus = () => {
         const lastNode = edge("lastChild");
         if (first) first.textContent = first.textContent.trimStart();
         if (lastNode) lastNode.textContent = lastNode.textContent.trimEnd();
-        return root;
+        return { node: root, level };
       })
-      .filter((root) => root.textContent.trim() !== "");
+      .filter(({ node }) => node.textContent.trim() !== "");
+  }
+
+  // Build a (possibly nested) list. An item can sit at most one level deeper
+  // than the item before it, so "A | B ||| C" nests C one level under B.
+  function buildList(listType, items, fill) {
+    const root = document.createElement(listType);
+    const lists = [root]; // lists[d] is the open list at depth d
+    let prevLi = null;
+    items.forEach((item) => {
+      let depth = prevLi ? Math.min(item.level, lists.length) : 0;
+      if (depth === lists.length) {
+        const sub = document.createElement(listType);
+        prevLi.appendChild(sub);
+        lists.push(sub);
+      } else {
+        lists.length = depth + 1;
+      }
+      const li = document.createElement("li");
+      fill(li, item);
+      lists[depth].appendChild(li);
+      prevLi = li;
+    });
+    return root;
   }
 
   function hydrate() {
@@ -125,30 +166,29 @@ export const hydrateSyllabus = () => {
       if (rich) {
         items = splitRichCell(courseCells[key]);
       } else if (listType) {
-        items = courseData[key].split("|").map((s) => s.trim()).filter(Boolean);
+        items = courseData[key]
+          .split("|")
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .map((text) => ({ text, level: 0 }));
       }
 
       if (listType && (key === "course-outcomes" || items.length > 1)) {
         if (el.dataset.hydratedCourseValue === signature) return;
 
         el.textContent = "";
-        const list = document.createElement(listType);
-        items.forEach((item) => {
-          const li = document.createElement("li");
-          if (rich) {
-            li.append(...item.childNodes);
-          } else {
-            li.textContent = item;
-          }
-          list.appendChild(li);
-        });
-        el.appendChild(list);
+        el.appendChild(
+          buildList(listType, items, (li, item) => {
+            if (rich) li.append(...item.node.childNodes);
+            else li.textContent = item.text;
+          })
+        );
         el.dataset.hydratedCourseValue = signature;
       } else if (rich) {
         if (el.dataset.hydratedCourseValue === signature) return;
 
         el.textContent = "";
-        if (items.length) el.append(...items[0].childNodes);
+        if (items.length) el.append(...items[0].node.childNodes);
         el.dataset.hydratedCourseValue = signature;
       } else {
         delete el.dataset.hydratedCourseValue;
