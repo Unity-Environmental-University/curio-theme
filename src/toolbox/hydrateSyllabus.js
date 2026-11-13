@@ -17,12 +17,23 @@ export const hydrateSyllabus = () => {
   const KEEP_TAGS = new Set(["I", "EM", "B", "STRONG", "A", "SPAN"]);
   const SAFE_HREF = /^(https?:\/\/|mailto:)/i;
 
+  // Canvas decorates external links on the page (including the ones in the
+  // hidden table) with a screen-reader note ("Links to an external site.") and
+  // an icon. Copying those would show the note as ordinary text, so they are
+  // left behind; Canvas decorates the copied link on its own.
+  const isCanvasLinkDecoration = (el) =>
+    el.tagName === "SVG" ||
+    el.classList.contains("screenreader-only") ||
+    el.classList.contains("external_link_icon") ||
+    el.classList.contains("ui-icon");
+
   // Copy a cell node into `parent`, keeping only links/emphasis. Anything else
   // contributes its text only.
   function appendSafe(node, parent) {
     if (node.nodeType === Node.TEXT_NODE) {
       parent.appendChild(document.createTextNode(node.textContent));
     } else if (node.nodeType === Node.ELEMENT_NODE) {
+      if (isCanvasLinkDecoration(node)) return;
       const ok =
         KEEP_TAGS.has(node.tagName) &&
         (node.tagName !== "A" || SAFE_HREF.test(node.getAttribute("href") || ""));
@@ -43,6 +54,10 @@ export const hydrateSyllabus = () => {
   function splitRichCell(cell) {
     const safe = document.createElement("div");
     cell.childNodes.forEach((child) => appendSafe(child, safe));
+    // A link with no text (left over from pasting) would show only Canvas's external-link note.
+    safe.querySelectorAll("a").forEach((a) => {
+      if (!a.textContent.trim()) a.remove();
+    });
 
     const items = [];
     // `level` is the nesting depth: "|" starts a top-level item (0), "||" one
