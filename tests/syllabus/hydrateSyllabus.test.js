@@ -66,6 +66,46 @@ describe('hydrateSyllabus', () => {
         lis.forEach((li) => expect(li.querySelector('i')).not.toBeNull());
     });
 
+    // Shape of a list as nested arrays: [text, [children...]]
+    const shape = (list) =>
+        [...list.children].map((li) => {
+            const sub = li.querySelector(':scope > ul');
+            const own = [...li.childNodes].filter((n) => n !== sub).map((n) => n.textContent).join('');
+            return sub ? [own, shape(sub)] : [own];
+        });
+
+    test('"||" and "|||" nest items under the item before them', () => {
+        page(row('textbook', 'LM1 | LM2 || LM3 || LM4 | LM5 || LM6 ||| LM7'));
+        run();
+        expect(shape(textbook().querySelector('ul'))).toEqual([
+            ['LM1'],
+            ['LM2', [['LM3'], ['LM4']]],
+            ['LM5', [['LM6', [['LM7']]]]],
+        ]);
+    });
+
+    test('an item can only nest one level deeper than the one before it', () => {
+        page(row('textbook', 'A ||| B | C'));
+        run();
+        expect(shape(textbook().querySelector('ul'))).toEqual([['A', [['B']]], ['C']]);
+    });
+
+    test('nested items keep their links and emphasis', () => {
+        page(row('textbook', 'Kit: <a href="https://example.edu/kit">order form</a> || <i>Note</i>: paid by student'));
+        run();
+        const sub = textbook().querySelector('li > ul > li');
+        expect(sub.querySelector('i').textContent).toBe('Note');
+        expect(textbook().querySelector('a').getAttribute('href')).toBe('https://example.edu/kit');
+        expect(textbook().textContent).not.toContain('|');
+    });
+
+    test('outcomes stay flat even if the cell has "||"', () => {
+        page(row('course-outcomes', 'One || Two'));
+        run();
+        const ol = document.querySelector('[data-course-field="course-outcomes"] ol');
+        expect([...ol.children].map((li) => li.textContent)).toEqual(['One', 'Two']);
+    });
+
     test('unsafe content is reduced to text: no scripts, handlers, or javascript: links', () => {
         page(row('textbook',
             '<a href="javascript:alert(1)" onclick="x()">bad link</a> | <img src=x onerror="x()"> ok <a href="https://example.edu" onclick="x()">good</a>'));
