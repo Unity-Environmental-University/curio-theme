@@ -1,12 +1,25 @@
 // webpack.config.js
 import path from "path";
+import fs from "fs";
+import { execSync } from "child_process";
 import { fileURLToPath } from "url";
+import webpack from "webpack";
 import NodePolyfillPlugin from "node-polyfill-webpack-plugin";
 import TerserPlugin from "terser-webpack-plugin";
 
 // Emulate CommonJS __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const { version } = JSON.parse(fs.readFileSync(path.join(__dirname, "package.json"), "utf8"));
+let sha = "unknown";
+try {
+  sha = execSync("git rev-parse --short HEAD", { cwd: __dirname, stdio: ["ignore", "pipe", "ignore"] })
+    .toString()
+    .trim();
+} catch (e) {
+  /* not a git checkout; leave as "unknown" */
+}
 
 const common = {
   entry: {
@@ -33,7 +46,15 @@ const common = {
       fs: false,
     },
   },
-  plugins: [new NodePolyfillPlugin()],
+  plugins: [
+    new NodePolyfillPlugin(),
+    // Stamp every bundle with the package version + commit so a deployed file can be traced to git.
+    new webpack.BannerPlugin({
+      banner: `/* curio-theme v${version} ${sha} */window.__curioThemeVersion=${JSON.stringify(`${version} ${sha}`)};`,
+      raw: true,
+      entryOnly: true,
+    }),
+  ],
   externals: {
     react: "React",
     "react-dom": "ReactDOM",
@@ -72,4 +93,5 @@ const prodConfig = {
   },
 };
 
-export default [devConfig, prodConfig];
+// `npm run build` -> production (.min.js) only; `npm run build:dev` / `npm run watch` -> dev bundle only.
+export default (env) => (env && env.dev ? [devConfig] : [prodConfig]);
