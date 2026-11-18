@@ -1,3 +1,4 @@
+import {TASKS_SCOPE, mergeMarkData, parseStoredValue} from "../toolbox/markableDiscussionStore.js";
 import {createApiFunctions} from "./createApiFunctions.js";
 
 export const afterInit = (scaffoldClient) => {
@@ -8,6 +9,8 @@ export const afterInit = (scaffoldClient) => {
     scaffoldClient.courseData = {
         currentItem: null,
         markableDiscussions: {},
+        legacyMarks: {},
+        taskMarks: {},
         currentModule: {},
         modules: [],
         saveModuleItems: function (data) {/* save all the module items information */
@@ -55,8 +58,23 @@ export const afterInit = (scaffoldClient) => {
             if (typeof discussions !== 'object' || Object.keys(discussions).length === 0) {
                 return Promise.resolve();
             }
-            scaffoldClient.courseData.markableDiscussions = JSON.parse(discussions.data);
+            scaffoldClient.courseData.legacyMarks = parseStoredValue(discussions.data);
+            scaffoldClient.courseData.refreshMarkableDiscussions();
             return Promise.resolve();
+        },
+        saveTaskMarks: function (tasks) {/* per-discussion marks: {task-<id>: [...]}; these win over the legacy blob */
+            if (typeof tasks !== 'object' || tasks === null || tasks.data === undefined) {
+                return Promise.resolve();
+            }
+            scaffoldClient.courseData.taskMarks = parseStoredValue(tasks.data);
+            scaffoldClient.courseData.refreshMarkableDiscussions();
+            return Promise.resolve();
+        },
+        refreshMarkableDiscussions: function () {
+            scaffoldClient.courseData.markableDiscussions = mergeMarkData(
+                scaffoldClient.courseData.legacyMarks,
+                scaffoldClient.courseData.taskMarks
+            );
         }
     };
 
@@ -120,6 +138,8 @@ export const afterInit = (scaffoldClient) => {
             // Get and saved the discussion
             let discussionUrl = "/api/v1/users/self/custom_data/cbt_discussion_" + scaffoldClient.getCourseID() + "?ns=cbt_discussion_" + scaffoldClient.getCourseID()
             scaffoldClient.preloadPromises.push(scaffoldClient.fetchResults(discussionUrl, scaffoldClient.courseData.saveMarkableDiscussions));
+            let taskMarksUrl = "/api/v1/users/self/custom_data/" + TASKS_SCOPE + "?ns=cbt_discussion_" + scaffoldClient.getCourseID();
+            scaffoldClient.preloadPromises.push(scaffoldClient.fetchResults(taskMarksUrl, scaffoldClient.courseData.saveTaskMarks));
 
             // Get current module id
             let currentModuleUrl = "/api/v1/courses/" + scaffoldClient.getCourseID() + "/modules?per_page=100&include[]=items&search_term=" + scaffoldClient.getPageTitle();
