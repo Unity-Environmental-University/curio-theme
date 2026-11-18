@@ -764,8 +764,8 @@ export const createScaffoldClient = function (scaffoldClient, $) {
                             }
 
                             tasks = document.querySelectorAll('.cbt-manual-mark-btn');
-                            if (tasks) {   // tasks == "mark as done" on page
-                                console.log("mvirgin setupDiscussionNoticeAsync called");
+                            if (tasks.length > 0) {   // tasks == "mark as done" on page
+                                console.log("setupDiscussionNoticeAsync called");
                                 setupDiscussionNoticeAsync(discussionId, scaffoldClient.getCourseID()).then();
                             }
 
