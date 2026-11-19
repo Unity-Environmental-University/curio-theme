@@ -405,7 +405,7 @@ export const createScaffoldClientMobile = (scaffoldClient) => {
 
                     // all progress items should consider discussions
                     if (document.querySelector(".cbt-home-cards")) {
-                        await scaffoldClient.getHomeCardsAsync(scaffoldClient.courseData.modules, scaffoldClient); // custom based on the template
+                        await scaffoldClient.getHomeCardsAsync(scaffoldClient, scaffoldClient.courseData.modules); // custom based on the template
                     }
                     if (document.querySelector(".cbt-course-progress")) {
                         scaffoldClient.getContinueItem().then(function (item) {
@@ -513,7 +513,7 @@ export const createScaffoldClientMobile = (scaffoldClient) => {
         }
 
         if (scaffoldClient.options.afterOnLoad !== undefined && typeof scaffoldClient.options.afterOnLoad === 'function')
-            scaffoldClient.options.afterOnLoad();
+            scaffoldClient.options.afterOnLoad(scaffoldClient);
 
         scaffoldClient.onloadset = true;
     };
