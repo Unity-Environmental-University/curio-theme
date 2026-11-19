@@ -109,26 +109,41 @@ export const afterInit = (scaffoldClient) => {
     scaffoldClient.minimumRateRemaining = null;
     scaffoldClient.maximumRequestCost = null;
 
+    // Shared across calls so concurrent callers never inject a second script.
+    let bottleneckLoadPromise = null;
+
     scaffoldClient.initBottleneck = function () {
-        return new Promise(function (res, rej) {
-            if (typeof Bottleneck === 'undefined') {
-                const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/bottleneck@2/light.min.js';
-                script.onload = function () {
-                    scaffoldClient.initBottleneck().then(
-                        res()
-                    );
-                };
-                document.head.appendChild(script);
-            } else {
+        if (typeof Bottleneck !== 'undefined') {
+            if (!scaffoldClient.limiter) {
                 scaffoldClient.limiter = new Bottleneck({
                     'maxConcurrent': scaffoldClient.maxConcurrent,
                     'minTime': scaffoldClient.minTime,
                 });
                 console.log("bottleneck is resolved!");
-                res();
             }
-        })
+            return Promise.resolve();
+        }
+
+        if (!bottleneckLoadPromise) {
+            bottleneckLoadPromise = new Promise(function (res, rej) {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/bottleneck@2/light.min.js';
+                script.onload = function () {
+                    res();
+                };
+                script.onerror = function () {
+                    // allow a later call to retry
+                    bottleneckLoadPromise = null;
+                    script.remove();
+                    rej(new Error('Failed to load Bottleneck from ' + script.src));
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        return bottleneckLoadPromise.then(function () {
+            return scaffoldClient.initBottleneck();
+        });
     }
 
     // set up bottleneck for API calls
@@ -149,6 +164,8 @@ export const afterInit = (scaffoldClient) => {
             let moduleItemUrl = origin + "/api/v1/courses/" + scaffoldClient.getCourseID() + "/modules?per_page=100&include[]=items";
             scaffoldClient.preloadPromises.push(scaffoldClient.fetchResults(moduleItemUrl, scaffoldClient.courseData.saveModuleItems));
         }
+    }).catch(function (e) {
+        console.error('Bottleneck failed to load; API preloads skipped:', e);
     });
 
     scaffoldClient.checkFailed = function () {
@@ -337,8 +354,10 @@ export const afterInit = (scaffoldClient) => {
             } else {
                 scaffoldClient.initBottleneck().then(function () {
                     if (scaffoldClient.getCourseID()) {
-                        scaffoldClient.apiFunctions();
+                        scaffoldClient.apiFunctions(scaffoldClient);
                     }
+                }).catch(function (e) {
+                    console.error('Curio theme features could not start:', e);
                 });
             }
         }
