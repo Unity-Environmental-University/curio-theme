@@ -1,4 +1,5 @@
-import {migrateMarkData} from "../toolbox/markableDiscussionUtils.js";
+import {renderMarkButtons, showMarkSaveError, clearMarkSaveError} from "../toolbox/markableDiscussionUtils.js";
+import {createMarkStore, createSaveQueue, withRetry, applyPendingOps} from "../toolbox/markableDiscussionStore.js";
 import { afterOnLoad } from "./afterOnLoad.js";
 import {getHomeCardsAsync} from "../homeCards/getHomeCardsAsync.js";
 
@@ -1044,61 +1045,80 @@ export const createScaffoldClientMobile = (scaffoldClient) => {
         const markable_discussion = {
             dataHandler: {
                 data: {},
+                loaded: false, // true once the student's saved marks were read successfully
+                recovering: false,
+                pending: {}, // taskId -> checked: clicks made while the saved marks could not be read yet
+                saveQueues: {},
                 ns: "cbt_discussion_" + scaffoldClient.getCourseID(),
-                getData: function () {
-                    var e = {
-                        ns: markable_discussion.dataHandler.ns
-                    };
-                    return new Promise(function (i, e) {
-                        fetch("/api/v1/users/self/custom_data/" + markable_discussion.dataHandler.ns + "?ns=" + markable_discussion.dataHandler.ns, {
-                            method: 'GET',
-                            credentials: 'include',
-                            headers: {
-                                "Accept": "application/json",
-                                "X-CSRF-Token": scaffoldClient.getCsrfToken()
-                            }
-                        })
-                            .then(scaffoldClient.fetchstatus)
-                            .then(scaffoldClient.fetchjson)
-                            .then(function (t) {
-                                var e = JSON.parse(t.data);
-                                i(e)
-                            })
-                            .catch(function (error) {
-                                console.log(`initMarkableDiscussion Get Error: ${error}`);
-                                e(error);
-                            });
-                    })
+                store: null,
+                getStore: function () {
+                    const h = markable_discussion.dataHandler;
+                    if (!h.store) {
+                        h.store = createMarkStore({ns: h.ns, getCsrfToken: () => scaffoldClient.getCsrfToken()});
+                    }
+                    return h.store;
                 },
-                setData: function (d) {
-                    var i = {
-                        data: d
-                    };
-
-                    return new Promise(function (e) {
-                        fetch('/api/v1/users/self/custom_data/' + markable_discussion.dataHandler.ns + "?ns=" + markable_discussion.dataHandler.ns, {
-                            method: 'PUT',
-                            credentials: 'include',
-                            headers: {
-                                'Accept': 'application/json',
-                                'Content-Type': 'application/json',
-                                "X-CSRF-Token": scaffoldClient.getCsrfToken()
-                            },
-                            body: JSON.stringify(i)
-                        })
-                            .then(scaffoldClient.fetchstatus)
-                            .then(scaffoldClient.fetchjson)
-                            .then(function (t) {
-                                var i = JSON.parse(t.data);
-                                console.log(i),
-                                    e(i)
-                            })
-                            .catch(function (error) {
-                                console.log(`initMarkableDiscussion Set Error: ${error}`);
+                /** Resolves {} for a student with no marks yet; rejects if the marks could not be read. */
+                getData: function () {
+                    return markable_discussion.dataHandler.getStore().loadAll();
+                },
+                /** Saves ONE discussion's marks (never any other discussion's), retrying with backoff. */
+                save: function (key) {
+                    const h = markable_discussion.dataHandler;
+                    if (!h.saveQueues[key]) {
+                        h.saveQueues[key] = createSaveQueue(function () {
+                            return withRetry(function () {
+                                return h.getStore().saveDiscussion(key, h.data[key] || []);
+                            }, {attempts: 5});
+                        });
+                    }
+                    return h.saveQueues[key]();
+                },
+                persist: function (key, taskId, checked, button) {
+                    const h = markable_discussion.dataHandler;
+                    if (!h.loaded) {
+                        // Never write before the existing marks are known. Keep the click and save it once they load.
+                        h.pending[taskId] = checked;
+                        if (!h.recovering) h.recover(key);
+                        return;
+                    }
+                    h.save(key).then(function () {
+                        clearMarkSaveError(button);
+                    }, function (err) {
+                        console.log(`initMarkableDiscussion Save Error: ${err}`);
+                        showMarkSaveError(button);
+                    });
+                },
+                /** Keeps trying to read the saved marks in the background, then applies any clicks made meanwhile. */
+                recover: function (key) {
+                    const h = markable_discussion.dataHandler;
+                    h.recovering = true;
+                    withRetry(function () {
+                        return h.getStore().loadAll();
+                    }, {attempts: 7}).then(function (loaded) {
+                        const ids = applyPendingOps(loaded[key] || [], h.pending);
+                        const hadPending = Object.keys(h.pending).length > 0;
+                        loaded[key] = ids;
+                        h.data = loaded;
+                        h.pending = {};
+                        h.loaded = true;
+                        h.recovering = false;
+                        renderMarkButtons(document.querySelectorAll('.cbt-manual-mark-btn'), key, ids, function (taskId, btn) {
+                            markable_discussion.ui.updateTaskHTML(taskId, btn);
+                        });
+                        if (hadPending) {
+                            h.save(key).catch(function (err) {
+                                console.log(`initMarkableDiscussion Save Error: ${err}`);
+                                showMarkSaveError(document.querySelector('.cbt-manual-mark-btn button'));
                             });
-                    })
+                        }
+                    }, function (err) {
+                        h.recovering = false;
+                        console.log(`initMarkableDiscussion Get Error: ${err}`);
+                        showMarkSaveError(document.querySelector('.cbt-manual-mark-btn button'),
+                            ' Your progress could not be loaded, so it has not been saved. Click again to retry.');
+                    });
                 }
-
             },
             ui: {
                 updateTaskHTML: function (task_id, e) {
@@ -1106,7 +1126,9 @@ export const createScaffoldClientMobile = (scaffoldClient) => {
                     if (/task-(\d)+-/.test(task_id)) {
                         discussionId = task_id.match(/task-(\d)+-/)[0].replace(/-$/, '');
                     }
+                    var isNowChecked = false;
                     if (e.querySelector(".utc-icon-empty")) { //not checked
+                        isNowChecked = true;
                         e.querySelector(".utc-icon-empty").classList.add("utc-icon-checkmark-circle");
                         e.classList.add("utc-mark-done");
                         e.querySelector(".utc-icon-empty").classList.remove("utc-icon-empty");
@@ -1137,11 +1159,7 @@ export const createScaffoldClientMobile = (scaffoldClient) => {
                         }
                     }
                     console.log(markable_discussion.dataHandler.data);
-                    markable_discussion.dataHandler.setData(JSON.stringify(markable_discussion.dataHandler.data)).then(function (t) {
-                        console.log(t)
-                    }, function (t) {
-                        console.log(`initMarkableDiscussion updateTaskHTML Error: ${t}`);
-                    })
+                    markable_discussion.dataHandler.persist(discussionId, task_id, isNowChecked, e);
                 }
             },
 
@@ -1149,11 +1167,8 @@ export const createScaffoldClientMobile = (scaffoldClient) => {
                 // check task status
                 markable_discussion.dataHandler.getData().then(function (e) {
                     console.log("Data exists");
-                    const migrated = migrateMarkData(e);
-                    markable_discussion.dataHandler.data = migrated.data;
-                    if (migrated.changed) {
-                        markable_discussion.dataHandler.setData(JSON.stringify(migrated.data));
-                    }
+                    markable_discussion.dataHandler.data = e;
+                        markable_discussion.dataHandler.loaded = true;
                     console.log(markable_discussion.dataHandler.data);
                     if (scaffoldClient.courseData.currentItem && scaffoldClient.courseData.currentItem.hasOwnProperty("type") && scaffoldClient.courseData.currentItem.type === 'Discussion') { // they have to be a module item
                         var discussionId = 'task-' + (Object.keys(scaffoldClient.courseData.currentModule).length > 0 ? scaffoldClient.courseData.currentItem.content_id : scaffoldClient.courseData.currentItem.id); // this is module item id
@@ -1204,19 +1219,16 @@ export const createScaffoldClientMobile = (scaffoldClient) => {
 
 
                 }, function (e) {
-                    console.log("No Data, create new data");
+                    console.log("Saved marks could not be read; showing buttons and retrying in the background");
                     if (scaffoldClient.courseData.currentItem && scaffoldClient.courseData.currentItem.hasOwnProperty("type") && scaffoldClient.courseData.currentItem.type === 'Discussion') { // they have to be a module item
                         var tasks = document.querySelectorAll('.cbt-manual-mark-btn');
                         var discussionId = Object.keys(scaffoldClient.courseData.currentModule).length > 0 ? scaffoldClient.courseData.currentItem.content_id : scaffoldClient.courseData.currentItem.id; // this is module item id
-                        for (let i = 0; i < tasks.length; i++) {
-                            /* Default status */
-                            tasks[i].innerHTML = '<button class="btn" data-discussion-done-id="task-' + discussionId + '-btn-' + i + '" ><i class="utc-icon-empty"></i> <span class="mark-done-labels"><span class="visible">Mark as done.</span></span></button>';
-                            tasks[i].querySelector('button').addEventListener("click", (e) => {
-                                var currTaskID = e.currentTarget.getAttribute("data-discussion-done-id");
-                                console.log(currTaskID);
-                                markable_discussion.ui.updateTaskHTML(currTaskID, e.currentTarget);
-                            })
-                        }
+                        /* Could not read the saved marks. Show the buttons right away so the page is not interrupted,
+                            keep clicks in memory (nothing is saved yet) and retry in the background. */
+                            renderMarkButtons(tasks, 'task-' + discussionId, [], function (taskId, btn) {
+                                markable_discussion.ui.updateTaskHTML(taskId, btn);
+                            });
+                            markable_discussion.dataHandler.recover('task-' + discussionId);
 
                         var tasks = document.querySelectorAll('.cbt-manual-mark-btn');
                         if (tasks && tasks.length == 2) {
