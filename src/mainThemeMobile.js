@@ -1,6 +1,6 @@
 import {createScaffoldClientMobile} from "./client/createScaffoldClientMobile.js";
 
-const ScaffoldClient = createScaffoldClientMobile(ScaffoldClient || {});
+const ScaffoldClient = createScaffoldClientMobile(window.ScaffoldClient || {});
 // load base css
 
 var loadstyles = [];
