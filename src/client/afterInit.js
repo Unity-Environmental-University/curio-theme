@@ -1,3 +1,4 @@
+import {migrateMarkData} from "../toolbox/markableDiscussionUtils.js";
 import {createApiFunctions} from "./createApiFunctions.js";
 
 export const afterInit = (scaffoldClient) => {
@@ -55,7 +56,7 @@ export const afterInit = (scaffoldClient) => {
             if (typeof discussions !== 'object' || Object.keys(discussions).length === 0) {
                 return Promise.resolve();
             }
-            scaffoldClient.courseData.markableDiscussions = JSON.parse(discussions.data);
+            scaffoldClient.courseData.markableDiscussions = migrateMarkData(JSON.parse(discussions.data)).data;
             return Promise.resolve();
         }
     };

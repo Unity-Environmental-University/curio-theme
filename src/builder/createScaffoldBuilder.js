@@ -1,3 +1,4 @@
+import {migrateMarkData} from "../toolbox/markableDiscussionUtils.js";
 import {getHomeCardsAsync} from "../homeCards/getHomeCardsAsync.js";
 import {useCanvasModuleUtils} from "../toolbox/canvasModuleUtils.js";
 import {accordionList} from "../components/accordionList.js";
@@ -2290,7 +2291,11 @@ export const createScaffoldBuilder = (scaffoldBuilder, scaffoldClient, $) => {
                 // check task status
                 markable_discussion.dataHandler.getData().then(function (e) {
                     console.log("Data exists");
-                    markable_discussion.dataHandler.data = e;
+                    const migrated = migrateMarkData(e);
+                    markable_discussion.dataHandler.data = migrated.data;
+                    if (migrated.changed) {
+                        markable_discussion.dataHandler.setData(JSON.stringify(migrated.data));
+                    }
                     console.log(markable_discussion.dataHandler.data);
                     if (scaffoldClient.courseData.currentItem && scaffoldClient.courseData.currentItem.hasOwnProperty("type") && scaffoldClient.courseData.currentItem.type === 'Discussion') { // they have to be a module item
                         var discussionId = 'task-' + (Object.keys(scaffoldClient.courseData.currentModule).length > 0 ? scaffoldClient.courseData.currentItem.content_id : scaffoldClient.courseData.currentItem.id); // this is module item id
@@ -2315,7 +2320,7 @@ export const createScaffoldBuilder = (scaffoldBuilder, scaffoldClient, $) => {
                             markable_discussion.dataHandler.data[discussionId] = [];
                             for (let i = 0; i < tasks.length; i++) {
                                 /* Default status */
-                                tasks[i].innerHTML = '<button class="btn" data-discussion-done-id="task-' + discussionId + '-btn-' + i + '" ><i class="utc-icon-empty"></i> <span class="mark-done-labels"><span class="visible">Mark as done.</span></span></button>';
+                                tasks[i].innerHTML = '<button class="btn" data-discussion-done-id="' + discussionId + '-btn-' + i + '" ><i class="utc-icon-empty"></i> <span class="mark-done-labels"><span class="visible">Mark as done.</span></span></button>';
                                 tasks[i].querySelector('button').addEventListener("click", (e) => {
                                     var currTaskID = e.currentTarget.getAttribute("data-discussion-done-id");
                                     console.log(currTaskID);
