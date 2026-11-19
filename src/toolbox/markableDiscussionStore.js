@@ -9,6 +9,8 @@
  * Reads merge both layouts; the per-discussion value wins for a key.
  */
 
+import {migrateMarkData} from "./markableDiscussionUtils.js";
+
 export const TASKS_SCOPE = 'tasks';
 const TASK_KEY_RE = /^task-\d+$/;
 
@@ -53,9 +55,16 @@ function onlyIdLists(map) {
     return out;
 }
 
-/** Legacy marks overlaid with per-discussion marks (per-discussion wins per key). */
+/**
+ * Legacy marks overlaid with per-discussion marks (per-discussion wins per key).
+ * Both are passed through migrateMarkData in memory so ids saved by the old "task-task-" bug
+ * display correctly. Nothing is written back; the legacy blob stays read-only.
+ */
 export function mergeMarkData(legacy, perDiscussion) {
-    return {...onlyIdLists(legacy), ...onlyIdLists(perDiscussion)};
+    return {
+        ...migrateMarkData(onlyIdLists(legacy)).data,
+        ...migrateMarkData(onlyIdLists(perDiscussion)).data,
+    };
 }
 
 /** Applies clicks made before the saved marks were readable: {taskId: checked}. */

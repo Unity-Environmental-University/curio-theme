@@ -287,3 +287,15 @@ describe('button rendering', () => {
         expect(container.querySelector('.mark-done-error')).toBeNull();
     });
 });
+
+describe('mergeMarkData migration', () => {
+    test('collapses doubled task- prefixes in both layouts without mutating input', () => {
+        const legacy = {'task-task-1': ['task-task-1-btn-0']};
+        const current = {'task-2': ['task-task-2-btn-1', 'task-2-btn-1']};
+        expect(mergeMarkData(legacy, current)).toEqual({
+            'task-1': ['task-1-btn-0'],
+            'task-2': ['task-2-btn-1'],
+        });
+        expect(legacy).toEqual({'task-task-1': ['task-task-1-btn-0']});
+    });
+});

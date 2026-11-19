@@ -755,7 +755,7 @@ export const createScaffoldClient = function (scaffoldClient, $) {
                                     markable_discussion.dataHandler.data[taskDiscussionId] = [];
                                     for (let i = 0; i < tasks.length; i++) {
                                         /* Default status */
-                                        tasks[i].innerHTML = '<button class="btn" data-discussion-done-id="task-' + taskDiscussionId + '-btn-' + i + '" ><i class="utc-icon-empty"></i> <span class="mark-done-labels"><span class="visible">Mark as done.</span></span></button>';
+                                        tasks[i].innerHTML = '<button class="btn" data-discussion-done-id="' + taskDiscussionId + '-btn-' + i + '" ><i class="utc-icon-empty"></i> <span class="mark-done-labels"><span class="visible">Mark as done.</span></span></button>';
                                         tasks[i].querySelector('button').addEventListener("click", (e) => {
                                             var currTaskID = e.currentTarget.getAttribute("data-discussion-done-id");
                                             console.log(currTaskID);

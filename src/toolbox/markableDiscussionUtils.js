@@ -1,4 +1,4 @@
-/** DOM helpers for the "Mark as done" buttons. */
+/** Helpers for the "Mark as done" buttons and the data behind them. */
 
 const DONE_HTML = (id) => '<button class="btn utc-mark-done" data-discussion-done-id="' + id + '" ><i class="utc-icon-checkmark-circle"></i> <span class="mark-done-labels"><span class="visible">Done</span></span></button>';
 const EMPTY_HTML = (id) => '<button class="btn" data-discussion-done-id="' + id + '" ><i class="utc-icon-empty"></i> <span class="mark-done-labels"><span class="visible">Mark as done.</span></span></button>';
@@ -35,4 +35,39 @@ export function clearMarkSaveError(button) {
     const container = button && button.parentElement;
     const msg = container && container.querySelector('.mark-done-error');
     if (msg) msg.remove();
+}
+
+const TASK_PREFIX_RE = /^(?:task-)+/;
+
+/**
+ * One-time migration for data saved by the bug that produced "task-task-<id>-btn-<i>" ids.
+ * Collapses repeated "task-" prefixes on keys and ids and de-duplicates entries.
+ * Never mutates the input.
+ *
+ * @param {Object<string, string[]>} data
+ * @returns {{data: Object<string, string[]>, changed: boolean}}
+ */
+export function migrateMarkData(data) {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+        return {data: {}, changed: false};
+    }
+    const result = {};
+    let changed = false;
+    for (const [key, ids] of Object.entries(data)) {
+        const newKey = key.replace(TASK_PREFIX_RE, 'task-');
+        if (newKey !== key) changed = true;
+        const list = Array.isArray(ids) ? ids : [];
+        if (!Array.isArray(ids)) changed = true;
+        if (!result[newKey]) result[newKey] = [];
+        for (const id of list) {
+            const newId = typeof id === 'string' ? id.replace(TASK_PREFIX_RE, 'task-') : id;
+            if (newId !== id) changed = true;
+            if (result[newKey].includes(newId)) {
+                changed = true; // duplicate dropped
+            } else {
+                result[newKey].push(newId);
+            }
+        }
+    }
+    return {data: result, changed};
 }
