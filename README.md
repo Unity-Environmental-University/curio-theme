@@ -41,6 +41,13 @@ npm run watch
 npm test
 ```
 
+## Changing styles
+
+Edit `src/css/custom_web.css`; that is the only stylesheet source. The build copies it to both
+`ueu_canvas_theme_web.css` and `ueu_canvas_theme_mobile.css` unchanged apart from the version comment, so a
+style change reaches both Theme Editor CSS slots. If mobile ever needs its own styles, add a separate source
+file and a second copy step in `webpack.config.js` (`EmitThemeCssPlugin`).
+
 ## Deploying
 
 Merging a change does not change what users see. It only reaches Canvas after a rebuild and a
@@ -52,3 +59,23 @@ Theme Editor upload. Nothing is built or uploaded automatically.
 3. Record the commit SHA from `window.__curioThemeVersion` and tag a GitHub release with the `build/` files attached.
 
 The `live/` directory is not part of this process; see `live/README.md`.
+
+## Releases and versions
+
+- Bump `version` in `package.json` before building a release. It appears in every build's version stamp
+  (`curio-theme v<version> <git sha>`), alongside the commit SHA.
+- Build from a clean checkout of the commit being released. The stamp records the commit but not uncommitted
+  changes, so a build from a dirty working tree can't be traced back exactly.
+- Tag a GitHub release for each Theme Editor upload and attach the four files from `build/` (not `build/dev/`).
+  The tag, the SHA in the stamp and the attached files then identify exactly what was uploaded.
+- To check what's live: run `window.__curioThemeVersion` in the browser console on a page using the theme, or
+  open the deployed JS/CSS and read the first line.
+
+## Troubleshooting
+
+- **Old files in `build/`:** `npm run build` clears `build/` first. `npm run build:dev` and `npm run watch` do not
+  clear it and only write to `build/dev/`.
+- **Mobile CSS looks different from before:** the mobile CSS slot now gets the same stylesheet as the web slot
+  (`custom_web.css`). Previously the repo's `live/UTC_Template2023_Mobile.css` was suspected to be in use for mobile;
+  confirm which file the mobile slot currently holds before switching.
+- **Which file goes where:** see the table under Deploying.

@@ -5,7 +5,8 @@ Nobody on the team is sure exactly what they are for.
 
 - `UTC_Template2023_Web.js`, `UTC_Template2023_Web.css`, `UTC_Template2023_Mobile.js`: old copies of the
   theme, untouched since early 2025 and missing later fixes.
-- `UTC_Template2023_Mobile.css`: no `src/` equivalent, and it lacks the 2026 CSS fixes.
+- `UTC_Template2023_Mobile.css`: no `src/` equivalent, and it lacks the 2026 CSS fixes. The main README's build
+  output now provides `ueu_canvas_theme_mobile.css` (a copy of `src/css/custom_web.css`) for the mobile CSS slot.
 - `ROOT_Theme.js`: `src/rootThemeWeb.js` is not a webpack entry and has drifted from this file. Its
   deployment status is unconfirmed.
 
