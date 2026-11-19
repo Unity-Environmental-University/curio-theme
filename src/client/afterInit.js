@@ -1,3 +1,4 @@
+import {TASKS_SCOPE, mergeMarkData, parseStoredValue} from "../toolbox/markableDiscussionStore.js";
 import {createApiFunctions} from "./createApiFunctions.js";
 
 export const afterInit = (scaffoldClient) => {
@@ -8,6 +9,8 @@ export const afterInit = (scaffoldClient) => {
     scaffoldClient.courseData = {
         currentItem: null,
         markableDiscussions: {},
+        legacyMarks: {},
+        taskMarks: {},
         currentModule: {},
         modules: [],
         saveModuleItems: function (data) {/* save all the module items information */
@@ -55,8 +58,23 @@ export const afterInit = (scaffoldClient) => {
             if (typeof discussions !== 'object' || Object.keys(discussions).length === 0) {
                 return Promise.resolve();
             }
-            scaffoldClient.courseData.markableDiscussions = JSON.parse(discussions.data);
+            scaffoldClient.courseData.legacyMarks = parseStoredValue(discussions.data);
+            scaffoldClient.courseData.refreshMarkableDiscussions();
             return Promise.resolve();
+        },
+        saveTaskMarks: function (tasks) {/* per-discussion marks: {task-<id>: [...]}; these win over the legacy blob */
+            if (typeof tasks !== 'object' || tasks === null || tasks.data === undefined) {
+                return Promise.resolve();
+            }
+            scaffoldClient.courseData.taskMarks = parseStoredValue(tasks.data);
+            scaffoldClient.courseData.refreshMarkableDiscussions();
+            return Promise.resolve();
+        },
+        refreshMarkableDiscussions: function () {
+            scaffoldClient.courseData.markableDiscussions = mergeMarkData(
+                scaffoldClient.courseData.legacyMarks,
+                scaffoldClient.courseData.taskMarks
+            );
         }
     };
 
@@ -91,26 +109,41 @@ export const afterInit = (scaffoldClient) => {
     scaffoldClient.minimumRateRemaining = null;
     scaffoldClient.maximumRequestCost = null;
 
+    // Shared across calls so concurrent callers never inject a second script.
+    let bottleneckLoadPromise = null;
+
     scaffoldClient.initBottleneck = function () {
-        return new Promise(function (res, rej) {
-            if (typeof Bottleneck === 'undefined') {
-                const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/bottleneck@2/light.min.js';
-                script.onload = function () {
-                    scaffoldClient.initBottleneck().then(
-                        res()
-                    );
-                };
-                document.head.appendChild(script);
-            } else {
+        if (typeof Bottleneck !== 'undefined') {
+            if (!scaffoldClient.limiter) {
                 scaffoldClient.limiter = new Bottleneck({
                     'maxConcurrent': scaffoldClient.maxConcurrent,
                     'minTime': scaffoldClient.minTime,
                 });
                 console.log("bottleneck is resolved!");
-                res();
             }
-        })
+            return Promise.resolve();
+        }
+
+        if (!bottleneckLoadPromise) {
+            bottleneckLoadPromise = new Promise(function (res, rej) {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/bottleneck@2/light.min.js';
+                script.onload = function () {
+                    res();
+                };
+                script.onerror = function () {
+                    // allow a later call to retry
+                    bottleneckLoadPromise = null;
+                    script.remove();
+                    rej(new Error('Failed to load Bottleneck from ' + script.src));
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        return bottleneckLoadPromise.then(function () {
+            return scaffoldClient.initBottleneck();
+        });
     }
 
     // set up bottleneck for API calls
@@ -120,6 +153,8 @@ export const afterInit = (scaffoldClient) => {
             // Get and saved the discussion
             let discussionUrl = "/api/v1/users/self/custom_data/cbt_discussion_" + scaffoldClient.getCourseID() + "?ns=cbt_discussion_" + scaffoldClient.getCourseID()
             scaffoldClient.preloadPromises.push(scaffoldClient.fetchResults(discussionUrl, scaffoldClient.courseData.saveMarkableDiscussions));
+            let taskMarksUrl = "/api/v1/users/self/custom_data/" + TASKS_SCOPE + "?ns=cbt_discussion_" + scaffoldClient.getCourseID();
+            scaffoldClient.preloadPromises.push(scaffoldClient.fetchResults(taskMarksUrl, scaffoldClient.courseData.saveTaskMarks));
 
             // Get current module id
             let currentModuleUrl = "/api/v1/courses/" + scaffoldClient.getCourseID() + "/modules?per_page=100&include[]=items&search_term=" + scaffoldClient.getPageTitle();
@@ -129,6 +164,8 @@ export const afterInit = (scaffoldClient) => {
             let moduleItemUrl = origin + "/api/v1/courses/" + scaffoldClient.getCourseID() + "/modules?per_page=100&include[]=items";
             scaffoldClient.preloadPromises.push(scaffoldClient.fetchResults(moduleItemUrl, scaffoldClient.courseData.saveModuleItems));
         }
+    }).catch(function (e) {
+        console.error('Bottleneck failed to load; API preloads skipped:', e);
     });
 
     scaffoldClient.checkFailed = function () {
@@ -317,8 +354,10 @@ export const afterInit = (scaffoldClient) => {
             } else {
                 scaffoldClient.initBottleneck().then(function () {
                     if (scaffoldClient.getCourseID()) {
-                        scaffoldClient.apiFunctions();
+                        scaffoldClient.apiFunctions(scaffoldClient);
                     }
+                }).catch(function (e) {
+                    console.error('Curio theme features could not start:', e);
                 });
             }
         }
