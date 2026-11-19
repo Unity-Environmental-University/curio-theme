@@ -21,6 +21,30 @@ try {
   /* not a git checkout; leave as "unknown" */
 }
 
+const stamp = `curio-theme v${version} ${sha}`;
+
+/**
+ * Emits the hand-written stylesheet into the build output so every file that gets uploaded to the
+ * Theme Editor comes from one folder. No processing beyond a version comment on the first line.
+ * The same stylesheet goes to both the web and mobile CSS slots.
+ */
+class EmitThemeCssPlugin {
+  apply(compiler) {
+    const { RawSource } = webpack.sources;
+    compiler.hooks.thisCompilation.tap("EmitThemeCssPlugin", (compilation) => {
+      compilation.hooks.processAssets.tap(
+        { name: "EmitThemeCssPlugin", stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL },
+        () => {
+          const css = fs.readFileSync(path.join(__dirname, "src/css/custom_web.css"), "utf8");
+          const out = new RawSource(`/* ${stamp} */\n${css}`);
+          compilation.emitAsset("ueu_canvas_theme_web.css", out);
+          compilation.emitAsset("ueu_canvas_theme_mobile.css", out);
+        }
+      );
+    });
+  }
+}
+
 const common = {
   entry: {
     web: "./src/mainThemeWeb.js", // Entry point for the web file
@@ -50,7 +74,7 @@ const common = {
     new NodePolyfillPlugin(),
     // Stamp every bundle with the package version + commit so a deployed file can be traced to git.
     new webpack.BannerPlugin({
-      banner: `/* curio-theme v${version} ${sha} */window.__curioThemeVersion=${JSON.stringify(`${version} ${sha}`)};`,
+      banner: `/* ${stamp} */window.__curioThemeVersion=${JSON.stringify(`${version} ${sha}`)};`,
       raw: true,
       entryOnly: true,
     }),
@@ -68,9 +92,10 @@ const devConfig = {
     minimize: false,
     concatenateModules: true,
   },
-  devtool: "eval-source-map",
+  // Readable bundles with external source maps. Not eval-based, so they can be diffed and read as-is.
+  devtool: "source-map",
   output: {
-    path: path.resolve(__dirname, "build"),
+    path: path.resolve(__dirname, "build", "dev"),
     filename: "ueu_canvas_theme_[name].js",
   },
 };
@@ -87,11 +112,13 @@ const prodConfig = {
       }),
     ],
   },
+  plugins: [...common.plugins, new EmitThemeCssPlugin()],
   output: {
     path: path.resolve(__dirname, "build"),
     filename: "ueu_canvas_theme_[name].min.js",
   },
 };
 
-// `npm run build` -> production (.min.js) only; `npm run build:dev` / `npm run watch` -> dev bundle only.
-export default (env) => (env && env.dev ? [devConfig] : [prodConfig]);
+// Default (`npm run build`): upload files in build/ plus unminified debug bundles in build/dev/.
+// `--env dev` builds only build/dev/ (used by `npm run watch`).
+export default (env) => (env && env.dev ? [devConfig] : [prodConfig, devConfig]);

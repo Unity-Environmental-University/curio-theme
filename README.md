@@ -4,27 +4,36 @@ Source code for the Unity Environmental University Canvas LMS theme.
 
 ## Output
 
-`npm run build` produces minified, production-only JS bundles in `build/` (gitignored):
+`npm run build` cleans `build/` (gitignored) and writes everything in one place:
 
-- `build/ueu_canvas_theme_web.min.js`
-- `build/ueu_canvas_theme_mobile.min.js`
+```
+build/
+  ueu_canvas_theme_web.min.js      -> Theme Editor JS
+  ueu_canvas_theme_mobile.min.js   -> Theme Editor mobile JS
+  ueu_canvas_theme_web.css         -> Theme Editor CSS
+  ueu_canvas_theme_mobile.css      -> Theme Editor mobile CSS
+  dev/                             -> never upload
+    ueu_canvas_theme_*.js          unminified, readable bundles
+    ueu_canvas_theme_*.js.map      source maps
+```
 
-Each bundle starts by setting `window.__curioThemeVersion` to `<version> <git sha>` (dev bundles also carry a
-`/* curio-theme v<version> <git sha> */` comment; the minifier strips it from the `.min.js` files). On a page
-using a deployed theme, run `window.__curioThemeVersion` in the browser console to see which build is live.
+The four files directly in `build/` are exactly what gets uploaded. The two CSS files are currently identical,
+copied from `src/css/custom_web.css` with a version comment added on the first line.
 
-`npm run build:dev` produces the unminified `eval-source-map` bundles (`ueu_canvas_theme_*.js`, no `.min`).
-These are for local debugging only; don't upload them.
+Every file carries `curio-theme v<version> <git sha>`. The JS bundles also set `window.__curioThemeVersion`, so on a
+page using a deployed theme you can run that in the browser console to see which build is live. `build/dev/` holds
+unminified copies of the same code, useful for debugging and for diffing against what's deployed; it uses plain
+source maps rather than `eval`, so it's readable.
 
 ## Usage
 
 ```bash
 npm install
 
-# Production build (what gets uploaded)
+# Full build: upload files in build/, debug bundles in build/dev/
 npm run build
 
-# Development build (with source maps) / watch mode
+# Debug bundles only (build/dev/) / watch mode
 npm run build:dev
 npm run watch
 
@@ -38,15 +47,8 @@ Merging a change does not change what users see. It only reaches Canvas after a 
 Theme Editor upload. Nothing is built or uploaded automatically.
 
 1. Check out the commit to release and run `npm ci && npm test && npm run build`.
-2. Upload these files to the Theme Editor as a candidate, test on beta/test, then apply:
-
-   | Theme Editor slot | File |
-   | --- | --- |
-   | JS | `build/ueu_canvas_theme_web.min.js` |
-   | Mobile JS | `build/ueu_canvas_theme_mobile.min.js` |
-   | CSS (both slots) | `src/css/custom_web.css`, uploaded as-is (no build step) |
-
-   Don't upload the unminified `build:dev` bundles.
+2. Upload the four files directly in `build/` to the matching Theme Editor slots as a candidate (see Output),
+   test on beta/test, then apply. Don't upload anything from `build/dev/`.
 3. Record the commit SHA from `window.__curioThemeVersion` and tag a GitHub release with the `build/` files attached.
 
 The `live/` directory is not part of this process; see `live/README.md`.

@@ -18,7 +18,8 @@
   "scripts": {
     "test": "jest",
     "watch": "webpack w --env dev",
-    "build": "webpack",
+    "clean": "node -e \"require('fs').rmSync('build',{recursive:true,force:true})\"",
+    "build": "npm run clean && webpack",
     "build:dev": "webpack --env dev"
   },
   "dependencies": {
