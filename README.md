@@ -35,12 +35,18 @@ npm test
 ## Deploying
 
 Merging a change does not change what users see. It only reaches Canvas after a rebuild and a
-Theme Editor upload:
+Theme Editor upload. Nothing is built or uploaded automatically.
 
 1. Check out the commit to release and run `npm ci && npm test && npm run build`.
-2. Upload the `build/*.min.js` bundles to the Theme Editor as a candidate, test on beta/test, then apply.
+2. Upload these files to the Theme Editor as a candidate, test on beta/test, then apply:
+
+   | Theme Editor slot | File |
+   | --- | --- |
+   | JS | `build/ueu_canvas_theme_web.min.js` |
+   | Mobile JS | `build/ueu_canvas_theme_mobile.min.js` |
+   | CSS (both slots) | `src/css/custom_web.css`, uploaded as-is (no build step) |
+
+   Don't upload the unminified `build:dev` bundles.
 3. Record the commit SHA from `window.__curioThemeVersion` and tag a GitHub release with the `build/` files attached.
 
-> The mapping of files to Theme Editor slots is not documented in this repo and has not been confirmed.
-> The `live/` directory is believed to be legacy (see issue #8) but is left in place until a maintainer
-> confirms against the Theme Editor which files each slot actually uses.
+The `live/` directory is not part of this process; see `live/README.md`.
