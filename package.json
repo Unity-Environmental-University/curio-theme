@@ -17,8 +17,9 @@
   },
   "scripts": {
     "test": "jest",
-    "watch": "webpack w",
-    "build": "webpack"
+    "watch": "webpack w --env dev",
+    "build": "webpack",
+    "build:dev": "webpack --env dev"
   },
   "dependencies": {
     "node-polyfill-webpack-plugin": "^4.1.0"

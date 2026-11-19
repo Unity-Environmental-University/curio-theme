@@ -4,17 +4,28 @@ Source code for the Unity Environmental University Canvas LMS theme.
 
 ## Output
 
-Running the build produces JS files for two platforms, placed in the `build/` directory.
+`npm run build` produces minified, production-only JS bundles in `build/` (gitignored):
+
+- `build/ueu_canvas_theme_web.min.js`
+- `build/ueu_canvas_theme_mobile.min.js`
+
+Each bundle starts by setting `window.__curioThemeVersion` to `<version> <git sha>` (dev bundles also carry a
+`/* curio-theme v<version> <git sha> */` comment; the minifier strips it from the `.min.js` files). On a page
+using a deployed theme, run `window.__curioThemeVersion` in the browser console to see which build is live.
+
+`npm run build:dev` produces the unminified `eval-source-map` bundles (`ueu_canvas_theme_*.js`, no `.min`).
+These are for local debugging only; don't upload them.
 
 ## Usage
 
 ```bash
 npm install
 
-# Development build (with source maps)
+# Production build (what gets uploaded)
 npm run build
 
-# Watch mode
+# Development build (with source maps) / watch mode
+npm run build:dev
 npm run watch
 
 # Run tests
